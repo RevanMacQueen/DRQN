@@ -40,3 +40,39 @@ class QNetwork(nn.Module):
         action_values = self.fc3(x)
         
         return action_values
+
+class RNNQNetwork(nn.Module):
+    """Simple recurrent network with single RNN layer and single linear layer"""
+
+    def __init__(self, input_size, action_size, hidden_state_size, seed, num_layers=1):
+        """Initialize parameters and build model.
+        Params
+        ======
+            input_size (int): Dimension of each state x number of states in sequence
+            action_size (int): Dimension of each action, also the size of the network output
+            hidden_state_size (int): Dimension of the RNN hidden state
+            seed (int): Random seed
+            num_layers (int): The number of recurrent layers (currently unused)
+        """
+        super(RNNQNetwork, self).__init__()
+        self.seed = torch.manual_seed(seed)
+        self.input_size = input_size
+        self.action_size = action_size
+        # self.hidden_layer_size = hidden_layer_size
+        self.hidden_state_size = hidden_state_size
+        self.num_layers = num_layers
+        self.rnn = nn.RNN(self.input_size, self.hidden_state_size, batch_first=True)
+        self.fc = nn.Linear(self.hidden_state_size, self.action_size)
+
+    def forward(self, x):
+        if len(x.shape) < 3:
+            x = x.unsqueeze(0)
+        # hidden = self.init_hidden(batch_size)
+        out, hidden = self.rnn(x)
+        out = out.view(-1, self.hidden_state_size)
+        action_values = self.fc(out)
+        return action_values
+
+    def init_hidden(self, batch_size):
+        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
+        return hidden

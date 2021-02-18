@@ -54,3 +54,39 @@ class ReplayBuffer:
     def __len__(self):
         """Return the current size of internal memory."""
         return len(self.memory)
+
+class RNNReplayBuffer:
+    def __init__(self, action_size, buffer_size, batch_size, seq_len, seed):
+        """Initialize a RNNReplayBuffer object.
+        Params
+        ======
+            action_size (int): dimension of each action
+            buffer_size (int): maximum size of buffer
+            batch_size (int): size of each training batch
+            seq_len (int): the length of the trajectories used for training
+            seed (int): random seed
+        """
+        self.action_size = action_size
+        self.memory = deque(maxlen=buffer_size)
+        self.batch_size = batch_size
+        self.seq_len = seq_len
+        self.trajectory = namedtuple("Trajectory", field_names=["states", "actions", "rewards", "next_states", "dones"])
+        self.seed = random.seed(seed)
+
+    def add(self, states, actions, rewards, next_states, dones):
+        t = self.trajectory(states, actions, rewards, next_states, dones)
+        self.memory.append(t)
+
+    def sample(self):
+        trajectories = random.sample(self.memory, k=self.batch_size)
+
+        state_sequences = torch.from_numpy(np.vstack([t.states for t in trajectories])).float().to(device)
+        action_sequences = torch.from_numpy(np.vstack([t.actions for t in trajectories])).float().to(device)
+        reward_sequences = torch.from_numpy(np.vstack([t.rewards for t in trajectories])).float().to(device)
+        next_state_sequences = torch.from_numpy(np.vstack([t.next_states for t in trajectories])).float().to(device)
+        done_sequences = torch.from_numpy(np.vstack([t.dones for t in trajectories])).float().to(device)
+
+        return (state_sequences, action_sequences, reward_sequences, next_state_sequences, done_sequences)
+
+    def __len__(self):
+        return len(self.memory)

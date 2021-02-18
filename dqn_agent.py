@@ -12,7 +12,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from model import QNetwork
+from model import QNetwork, RNNQNetwork
 from replay_buffer import ReplayBuffer
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
@@ -44,6 +44,8 @@ class Agent():
         # Q-Network
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
         self.qnetwork_target = QNetwork(state_size, action_size, seed).to(device)
+        # self.qnetwork_local = RNNQNetwork(state_size, action_size, 64, seed).to(device)
+        # self.qnetwork_target = RNNQNetwork(state_size, action_size, 64, seed).to(device)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
