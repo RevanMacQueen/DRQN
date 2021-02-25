@@ -51,6 +51,10 @@ class ReplayBuffer:
 
         return (states, actions, rewards, next_states, dones)
 
+    def can_sample(self):
+        """Determines if a valid batch can be produced from the current buffer. """
+        return len(self.memory) > self.batch_size
+
     def __len__(self):
         """Return the current size of internal memory."""
         return len(self.memory)

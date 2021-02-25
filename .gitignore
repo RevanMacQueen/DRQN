@@ -131,3 +131,6 @@ dmypy.json
 # Custom
 mazelib/
 .vscode/
+gym-recording
+
+results

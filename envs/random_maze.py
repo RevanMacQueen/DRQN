@@ -49,9 +49,13 @@ class RandomMaze(Env):
 
         self.UP, self.RIGHT, self.DOWN, self.LEFT = 0, 1, 2, 3 # agents actions
 
+
+        self.action_space = spaces.Discrete(4)
+        self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+
     def reset(self):
         self.loc = self.start
-        return self.loc
+        return  np.array(self.loc)
     
     def step(self, action):
         row,col = self.loc # row major format
@@ -77,7 +81,7 @@ class RandomMaze(Env):
 
         self.loc = [row, col]
 
-        return self.loc, reward, is_done, None
+        return np.array(self.loc), reward, is_done, None
 
     def showPNG(self):
         """Generate a simple image of the maze."""
@@ -94,12 +98,4 @@ class RandomMaze(Env):
 
         plt.xticks([]), plt.yticks([])
         plt.show()
-
-# env = RandomMaze()
-# while True:
-#     env.showPNG()
-#     action = int(input())
-#     print(action)
-#     env.step(action)
-    
 
