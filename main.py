@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 
 import gym
-from gym_recording.wrappers import TraceRecordingWrapper
+#from gym_recording.wrappers import TraceRecordingWrapper
 
 from agent.agent import Agent
 from envs.random_maze import RandomMaze
@@ -27,6 +27,8 @@ def get_args():
     parser.add_argument('--batch_size', default=64, type=int)
 
     parser.add_argument('--learning_rate', default=5e-4, type=float)
+    
+    parser.add_argument('--epsilon', default=0.1, type=float)
 
     parser.add_argument('--hidden_layer_size', default=64, type=int)  
 
@@ -71,8 +73,8 @@ def main(args):
     else:
         env = gym.make(args['env'])
 
-    if args['save_recording']:
-        env = TraceRecordingWrapper(env, save_dir)
+    # if args['save_recording']:
+    #     env = TraceRecordingWrapper(env, save_dir)
 
     with open(save_dir/'params.json', 'w') as fp:
         json.dump(args, fp)
@@ -84,9 +86,10 @@ def main(args):
     # Observation and action sizes
     if len(env.observation_space.shape) == 0:
         ob_dim = env.observation_space.n
-    else:
-        ob_dim = env.observation_space.shape if img else int(np.prod(env.observation_space.shape))
-
+    # else:
+    #     ob_dim = env.observation_space.shape if img else int(np.prod(env.observation_space.shape))
+        
+    
     ac_dim = env.action_space.n 
 
     args['input_dim'] = ob_dim
@@ -97,7 +100,7 @@ def main(args):
     obvs = env.reset()
     for i in tqdm(range(args['num_iterations'])):
         action = agent.act(obvs)
-        next_obs, reward, done, _ = env.step()
+        next_obs, reward, done, _ = env.step(action)
         agent.train_step(next_obs, action, reward, next_obs, done) # takes care of training
 
         obvs = next_obs
