@@ -81,7 +81,7 @@ class Agent():
         if random.random() > self.eps:
             action = np.argmax(action_values.cpu().data.numpy())
         else:
-            action =  random.choice(np.arange(self.action_size))
+            action =  random.choice(np.arange(self.action_dim))
 
         return action    
 
