@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -14,6 +15,8 @@ class Agent():
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
+        self.eps = self.agent_params['epsilon']
+        
         
         self.seed = self.agent_params['seed']
 
@@ -63,6 +66,7 @@ class Agent():
         self.tau  = self.agent_params['tau']
 
 
+
     def act(self, obs):
         """
         Take an returns an action given observation obs
@@ -74,7 +78,7 @@ class Agent():
             action_values = self.qnetwork_local(obs)
 
         # Epsilon-greedy action selection
-        if random.random() > eps:
+        if random.random() > self.eps:
             action = np.argmax(action_values.cpu().data.numpy())
         else:
             action =  random.choice(np.arange(self.action_size))
@@ -85,12 +89,13 @@ class Agent():
         """
         Handles agent training. Adds samples to replay buffer and, if appropriate, trains net
         """
-        self.memory.add(obs, action, reward, next_obs, done)
+        self.buffer.add(obs, action, reward, next_obs, done)
 
         self.t_step += 1
-        if self.t_step >= self.learning_starts and self.memory.can_sample():
+        if self.t_step >= self.learning_starts and self.buffer.can_sample():
             if self.t_step % self.learning_freq == 0:
-                experiences = self.memory.sample()
+                experiences = self.buffer.sample()
+                self.learn(experiences)
 
 
     def learn(self, experiences):
