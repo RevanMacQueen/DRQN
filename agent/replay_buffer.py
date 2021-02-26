@@ -90,7 +90,7 @@ class RNNReplayBuffer:
         """Add a new piece of experience to the replay buffer. The experience is added to the most recent episode
         """
         e = self.experience(state, action, reward, next_state, done)
-        self.memory[-1].append(e)
+        self.memory.append(e)
 
     def can_sample(self):
         """Determines if a valid batch can be produced from the current buffer. 
