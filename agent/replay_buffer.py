@@ -73,6 +73,7 @@ class RNNReplayBuffer:
         """
         self.action_size = action_size
         self.memory = deque(maxlen=buffer_size)
+        self.memory.append([])
         self.batch_size = batch_size
         self.seq_len = seq_len
         self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
@@ -90,7 +91,7 @@ class RNNReplayBuffer:
         """Add a new piece of experience to the replay buffer. The experience is added to the most recent episode
         """
         e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
+        self.memory[-1].append(e)
 
     def can_sample(self):
         """Determines if a valid batch can be produced from the current buffer. 

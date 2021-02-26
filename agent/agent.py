@@ -83,11 +83,13 @@ class Agent():
 
         return action    
 
-    def train_step(self, obs, action, reward, next_obs, done):
+    def train_step(self, obs, action, reward, next_obs, done, add_new_episode=False):
         """
         Handles agent training. Adds samples to replay buffer and, if appropriate, trains net
         """
         self.buffer.add(obs, action, reward, next_obs, done)
+        if type(self.buffer) is RNNReplayBuffer and add_new_episode:
+            self.buffer.add_episode()
 
         self.t_step += 1
         if self.t_step >= self.learning_starts and self.buffer.can_sample():

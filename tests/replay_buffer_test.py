@@ -14,7 +14,6 @@ def setup_rnn_replay_buffer():
     rb = RNNReplayBuffer(action_size, buffer_size, batch_size, seq_len, seed)
 
     for i in range(buffer_size):
-        rb.add_episode()
         for j in range(episode_len):
             state = i * np.ones(state_size)
             action = i * np.ones(action_size)
@@ -22,6 +21,7 @@ def setup_rnn_replay_buffer():
             next_state = i * np.ones(state_size)
             done = True if j == (episode_len-1) else False
             rb.add(state, action, reward, next_state, done)
+        rb.add_episode()
     assert len(rb.memory) == buffer_size
     return rb
 
