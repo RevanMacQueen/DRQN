@@ -20,8 +20,9 @@ def setup_rnn_replay_buffer():
             action = i * np.ones(action_size)
             reward = i
             next_state = i * np.ones(state_size)
-            done = True
+            done = True if j == (episode_len-1) else False
             rb.add(state, action, reward, next_state, done)
+    assert len(rb.memory) == buffer_size
     return rb
 
 def test_rnn_sample():

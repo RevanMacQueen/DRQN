@@ -65,8 +65,6 @@ class Agent():
         self.gamma = self.agent_params['gamma']
         self.tau  = self.agent_params['tau']
 
-
-
     def act(self, obs):
         """
         Take an returns an action given observation obs

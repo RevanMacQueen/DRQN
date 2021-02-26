@@ -84,10 +84,13 @@ def main(args):
     env.seed(seed)
 
     # Observation and action sizes
+    img = False
     if len(env.observation_space.shape) == 0:
         ob_dim = env.observation_space.n
-    # else:
-    #     ob_dim = env.observation_space.shape if img else int(np.prod(env.observation_space.shape))
+    elif not img:
+        ob_dim = int(np.prod(env.observation_space.shape))
+    else:
+        ob_dim = env.observation_space.shape 
         
     
     ac_dim = env.action_space.n 

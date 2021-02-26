@@ -15,6 +15,6 @@ scipy==1.6.0
 six==1.15.0
 torch==1.7.1
 typing-extensions==3.7.4.3
-mazelib==0.9.9
+mazelib
 gym-recording==0.0.1
 tqdm
