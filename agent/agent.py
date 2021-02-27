@@ -11,6 +11,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():  
     def __init__(self, agent_params):
+
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.agent_params = agent_params
 
         self.input_dim = self.agent_params['input_dim']
@@ -18,7 +21,7 @@ class Agent():
         self.eps = self.agent_params['epsilon']
         
         
-        self.seed = self.agent_params['seed']
+        self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
 
         if self.agent_params['model_arch'] == 'FFN':
             self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
@@ -50,7 +53,6 @@ class Agent():
             buffer_size = self.agent_params['buffer_size']
             batch_size = self.agent_params['batch_size']
             seq_len = self.agent_params['seq_len']
-            print(buffer_size)
             self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
 
         else:

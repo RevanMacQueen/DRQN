@@ -8,9 +8,11 @@ import argparse
 import numpy as np
 
 import gym
-#from gym_recording.wrappers import TraceRecordingWrapper
+from gym_recording.wrappers import TraceRecordingWrapper
+import matplotlib.pyplot as plt
 
 from agent.agent import Agent
+from agent.tabular_agent import TabularAgent
 from envs.random_maze import RandomMaze
 
 def get_args():
@@ -20,7 +22,7 @@ def get_args():
 
     parser.add_argument('--env', default='envs:random_maze-v0', type=str)
     
-    parser.add_argument('--model_arch', default='RNN', type=str)
+    parser.add_argument('--model_arch', default='RNN', type=str, help="Type of agent. Options: RNN, FFN, tabular")
 
     parser.add_argument('--buffer_size', default=10000, type=int)
 
@@ -42,15 +44,17 @@ def get_args():
 
     parser.add_argument('--target_update_freq', default=1, type=int)
 
-    parser.add_argument('--gamma', default=1, type=float)
+    parser.add_argument('--gamma', default=0.95, type=float)
 
     parser.add_argument('--tau', default=1e-3, type=float) 
+
+    parser.add_argument('--step_size', default=0.1, type=float, help='Step size for tabular agent') 
     
     parser.add_argument('--save_path', default='results', type=str)
 
     parser.add_argument('--save_recording', default=False, action='store_true', help = "Whether to record interactions" )
 
-    parser.add_argument('--n', default=10, type=int, help="size of random maze")
+    parser.add_argument('--n', default=5, type=int, help="size of random maze")
 
     parser.add_argument('--cycles', default=3, type=int, help="number of cycles in random maze")
 
@@ -59,8 +63,7 @@ def get_args():
     return vars(parser.parse_args())
 
 def main(args):
-
-    print(args['buffer_size'])
+    
     now = datetime.now()
     timestamp = datetime.timestamp(now)
     save_dir = Path(args['save_path'])/str(timestamp)
@@ -73,8 +76,8 @@ def main(args):
     else:
         env = gym.make(args['env'])
 
-    # if args['save_recording']:
-    #     env = TraceRecordingWrapper(env, save_dir)
+    if args['save_recording']:
+        env = TraceRecordingWrapper(env, save_dir)
 
     with open(save_dir/'params.json', 'w') as fp:
         json.dump(args, fp)
@@ -98,22 +101,25 @@ def main(args):
     args['input_dim'] = ob_dim
     args['action_dim'] = ac_dim
 
-    agent = Agent(args)
 
-    obvs = env.reset()
+    if args['model_arch'] == 'tabular':
+        agent = TabularAgent(args)
+    else:
+        agent = Agent(args)
+
+    obs = env.reset()
     for i in tqdm(range(args['num_iterations'])):
-        action = agent.act(obvs)
+        action = agent.act(obs)
         next_obs, reward, done, _ = env.step(action)
         # the replay buffer needs to know if an episode has ended and if training has ended
-        if done and (i != args['num_iterations']-1):
-            agent.train_step(next_obs, action, reward, next_obs, done, add_new_episode=True) # takes care of training
-        else:
-            agent.train_step(next_obs, action, reward, next_obs, done)
+        # if done and (i != args['num_iterations']-1):
+        #     agent.train_step(next_obs, action, reward, next_obs, done, add_new_episode=True) # takes care of training
+        # else:
+        agent.train_step(obs, action, reward, next_obs, done)
 
-        obvs = next_obs
+        obs = next_obs
         if done: # end of episode
-            obvs = env.reset()
-
+            obs = env.reset()
 
 if __name__ == '__main__':
     args = get_args()
