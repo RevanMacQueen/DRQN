@@ -14,7 +14,7 @@ class RandomMaze(Env):
     A randomly generated maze gridworld environment
     """
 
-    def __init__(self, n=10, cycles=3, seed=np.random.randint(0, 10000)):
+    def __init__(self, n=10, cycles=3, seed=np.random.randint(0, 10000), state_representation='integer'):
 
         """
         Use prims algorithm to generate the maze.
@@ -49,13 +49,21 @@ class RandomMaze(Env):
 
         self.UP, self.RIGHT, self.DOWN, self.LEFT = 0, 1, 2, 3 # agents actions
 
-
         self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+        
+        
+        if state_representation == 'integer':
+            self.gen_state = self.gen_integer_state
+            self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+        elif state_representation == 'flat_grid':
+            self.gen_state = self.gen_flat_grid_state
+            self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+        else:
+            raise NotImplementedError # add other ways to represent state here
 
     def reset(self):
         self.loc = self.start
-        return  np.array(self.loc)
+        return  self.gen_state(self.loc)
     
     def step(self, action):
         row,col = self.loc # row major format
@@ -81,7 +89,28 @@ class RandomMaze(Env):
 
         self.loc = [row, col]
 
-        return np.array(self.loc), reward, is_done, None
+        return self.gen_state(self.loc), reward, is_done, None
+
+
+    def gen_integer_state(self, loc):
+        """
+        Returns a number for the current state
+        """
+        row, col = loc
+
+        return row* self.grid.shape[1] + col
+
+    def gen_flat_grid_state(self,loc):
+
+        grid = np.copy(self.grid) 
+
+        plt.figure(figsize=(10, 5))
+
+        grid[self.start[0], self.start[1]] = 2
+        grid[self.end[0], self.end[1]] = 3
+        grid[self.loc[0], self.loc[1]] = 4
+
+        return grid.flatten()
 
     def showPNG(self):
         """Generate a simple image of the maze."""
@@ -98,4 +127,3 @@ class RandomMaze(Env):
 
         plt.xticks([]), plt.yticks([])
         plt.show()
-
