@@ -104,11 +104,7 @@ def main(args):
     for i in tqdm(range(args['num_iterations'])):
         action = agent.act(obvs)
         next_obs, reward, done, _ = env.step(action)
-        # the replay buffer needs to know if an episode has ended and if training has ended
-        if done and (i != args['num_iterations']-1):
-            agent.train_step(next_obs, action, reward, next_obs, done, add_new_episode=True) # takes care of training
-        else:
-            agent.train_step(next_obs, action, reward, next_obs, done)
+        agent.train_step(next_obs, action, reward, next_obs, done)
 
         obvs = next_obs
         if done: # end of episode

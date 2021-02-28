@@ -92,6 +92,8 @@ class RNNReplayBuffer:
         """
         e = self.experience(state, action, reward, next_state, done)
         self.memory[-1].append(e)
+        if done:
+            self.memory.append([])
 
     def can_sample(self):
         """Determines if a valid batch can be produced from the current buffer. 
