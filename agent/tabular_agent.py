@@ -12,7 +12,7 @@ class TabularAgent():
         self.action_dim = self.agent_params['action_dim']
         self.eps = self.agent_params['epsilon']
         self.gamma = self.agent_params['gamma']
-        self.step_size = self.agent_params['step_size']
+        self.step_size = self.agent_params['learning_rate']
 
         self.policy = EGreedyPolicy(epsilon=self.eps)
         self.q = np.zeros([self.input_dim, self.action_dim])

@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 
 import gym
-from gym_recording.wrappers import TraceRecordingWrapper
+from gym_recording_modified.wrappers import TraceRecordingWrapper
 import matplotlib.pyplot as plt
 
 from agent.agent import Agent
@@ -47,12 +47,12 @@ def get_args():
     parser.add_argument('--gamma', default=0.95, type=float)
 
     parser.add_argument('--tau', default=1e-3, type=float) 
-
-    parser.add_argument('--step_size', default=0.1, type=float, help='Step size for tabular agent') 
     
     parser.add_argument('--save_path', default='results', type=str)
 
     parser.add_argument('--save_recording', default=False, action='store_true', help = "Whether to record interactions" )
+
+    parser.add_argument('--only_reward', default=False, action='store_true', help = "Whether to only record rewards" )
 
     parser.add_argument('--n', default=5, type=int, help="size of random maze")
 
@@ -77,7 +77,7 @@ def main(args):
         env = gym.make(args['env'])
 
     if args['save_recording']:
-        env = TraceRecordingWrapper(env, save_dir)
+        env = TraceRecordingWrapper(env, save_dir, only_reward=args['only_reward'])
 
     with open(save_dir/'params.json', 'w') as fp:
         json.dump(args, fp)
