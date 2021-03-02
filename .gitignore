@@ -133,4 +133,4 @@ mazelib/
 .vscode/
 gym-recording
 
-results
+results/

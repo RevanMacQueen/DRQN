@@ -51,13 +51,16 @@ class RandomMaze(Env):
 
         self.action_space = spaces.Discrete(4)
         
-        
         if state_representation == 'integer':
             self.gen_state = self.gen_integer_state
             self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+        if state_representation == 'one_hot':
+            self.gen_state = self.gen_one_hot_state
+            self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+            self.observation_space = spaces.Box(low=0, high=1, shape = (np.prod(self.grid.shape), ), dtype=np.int8) 
         elif state_representation == 'flat_grid':
             self.gen_state = self.gen_flat_grid_state
-            self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
+            self.observation_space = spaces.Box(low=0, high=5, shape = (np.prod(self.grid.shape), ), dtype=np.int8) #not sure if this is right?
         else:
             raise NotImplementedError # add other ways to represent state here
 
@@ -94,11 +97,24 @@ class RandomMaze(Env):
 
     def gen_integer_state(self, loc):
         """
-        Returns a number for the current state
+        Returns an integer for the current state
+
+        NOTE: returns a numpy array with one element. This is done so that  NN-based methods using pytorch 
+        can also use this representation
         """
         row, col = loc
 
-        return row* self.grid.shape[1] + col
+        return np.array([row* self.grid.shape[1] + col])
+
+    def num_states(self):
+        return np.prod(self.grid.shape)
+
+    def gen_one_hot_state(self, loc):
+        row, col = loc
+        ind = [row* self.grid.shape[1] + col]
+        one_hot = np.zeros(self.num_states())
+        one_hot[ind] = 1
+        return one_hot
 
     def gen_flat_grid_state(self,loc):
 

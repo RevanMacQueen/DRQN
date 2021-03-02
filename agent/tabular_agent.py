@@ -17,23 +17,31 @@ class TabularAgent():
         self.policy = EGreedyPolicy(epsilon=self.eps)
         self.q = np.zeros([self.input_dim, self.action_dim])
 
-    def act(self, obs):
+    def act(self, obs_arr):
         """
         Take an returns an action given observation obs. 
-        Assume obs is an integer value
+        params:
+            obs_arr :np.array with a single entry giving the index of the state
         """
+        obs = obs_arr[0]
         a = self.policy.get_action(self.q[obs,:])
         return a
         
-    def act_evaluate(self, obs):
+    def act_evaluate(self, obs_arr):
         """
         Like act(), but acts greedily
+        params:
+            obs_arr :np.array with a single entry giving the index of the state
         """
+        obs = obs_arr[0]
         return random_argmax(self.q[obs,:])
 
-    def train_step(self, obs, action, reward, next_obs, done):
+    def train_step(self, obs_arr, action, reward, next_obs_arr, done):
         """
         Updates q values
+        params:
+            obs_arr :np.array with a single entry giving the index of the state
         """
-
+        obs = obs_arr[0]
+        next_obs = next_obs_arr[0]
         self.q[obs, action] +=  self.step_size*(reward + self.gamma*np.max(self.q[next_obs, :]) - self.q[obs, action]) # Q-learning update

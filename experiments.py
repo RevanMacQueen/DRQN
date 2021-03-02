@@ -8,87 +8,10 @@ Generates tabular experiments. Can either run them using this the --execute flag
 
 import numpy as np
 import argparse
-from main import main 
+from main import main
 from copy import deepcopy
 from tqdm import tqdm
 from multiprocessing import Pool
-
-# general arguments
-ARGS = {
-    'seed' : 1
-    'save_path': 'results',
-    'save_recording' : True,
-    'only_reward' : True,
-   }
-
-
-# Arguments for RNN
-RNN_ARGS = {
-    'model_arch' : 'RNN',
-    'buffer_size' : 10000,
-    'batch_size' : 64,
-    'hidden_layer_size' : 64,
-    'num_layers' : 1,
-    'seq_len' : 10,
-    'tau' : 1e-3,
-    'learning_starts': 50000,
-    'learning_freq' : 1,
-    'target_update_freq' : 1,
-    'learning_rate' : 5e-4,
-    'epsilon': 0.1 # all methods use epsilon greedy 
-    }
-
-# Arguments for FFN
-FFN_ARGS = {
-    'model_arch' : 'FFN',
-    'buffer_size' : 10000,
-    'batch_size' : 64,
-    'hidden_layer_size' : 64,
-    'num_layers' : 1,
-    'tau' : 1e-3,
-    'learning_starts': 50000,
-    'learning_freq' : 1,
-    'target_update_freq' : 1,
-    'learning_rate' : 5e-4,
-    'epsilon': 0.1 # all methods use epsilon greedy
-    }
-
-# Arguments for Tabular
-TAB_ARGS = {
-    'model_arch' : 'DQN',
-    'learning_rate' : 5e-4,
-    'epsilon': 0.1 # all methods use epsilon greedy 
-    }
-
-MODEL_ARGS = {
-    'FFN' : FFN_ARGS,
-    'RNN' : RNN_ARGS,
-    'Tabular' : TAB_ARGS
-    }
-
-# specific to maze environment
-MAZE_ARGS = {
-    'n' : 5,
-    'cycles' : 3,
-    'gamma' : 0.95,
-    'num_iterations' : 100000
-    }
-
-ENV_ARGS = {
-    'envs:random_maze-v0' : MAZE_ARGS
-}
-
-### Experimental Parameters ###
-np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=30)
-MODELS = ['FFN', 'RNN', 'tabular']
-ENV_IDS = ['envs:random_maze-v0'] 
-RUNS = {
-    'FFN' : ffn_runs,
-    'RNN' : rnn_runs,
-    'Tabular' : tab_runs
-}
-###############################
 
 
 def ffn_runs():
@@ -113,7 +36,7 @@ def tab_runs():
 def to_command(dic):
     command = 'python3 main.py'
     for key, value in dic.items():
-        if key == "only_rewards" :
+        if key == 'only_reward' or key =='save_recording' :
             command += ' --{}'.format(key)
         else:
             command += ' --{} {}'.format(key, value)
@@ -141,14 +64,99 @@ def get_args():
     return vars(parser.parse_args())
 
 
-def main(script_args):
+### DEFINE ARGUMENTS ###
+
+# general arguments
+GENERAL_ARGS = {
+    'seed' : 1,
+    'save_path': 'results',
+    'save_recording' : True,
+    'only_reward' : True
+   }
+
+
+# Arguments for RNN
+RNN_ARGS = {
+    'model_arch' : 'RNN',
+    'buffer_size' : 10000,
+    'batch_size' : 64,
+    'hidden_layer_size' : 64,
+    'num_layers' : 1,
+    'seq_len' : 10,
+    'tau' : 1e-3,
+    'learning_starts': 1000,
+    'learning_freq' : 100,
+    'target_update_freq' : 1,
+    'learning_rate' : 5e-4,
+    'epsilon': 0.1, # all methods use epsilon greedy 
+    'state_representation' : 'one_hot'
+    }
+
+# Arguments for FFN
+FFN_ARGS = {
+    'model_arch' : 'FFN',
+    'buffer_size' : 10000,
+    'batch_size' : 64,
+    'hidden_layer_size' : 64,
+    'num_layers' : 1,
+    'tau' : 1e-3,
+    'learning_starts': 1000,
+    'learning_freq' : 100,
+    'target_update_freq' : 1,
+    'learning_rate' : 5e-4,
+    'epsilon': 0.1, # all methods use epsilon greedy
+    'state_representation' : 'one_hot'
+    }
+
+# Arguments for tabular
+TAB_ARGS = {
+    'model_arch' : 'tabular',
+    'learning_rate' : 5e-4,
+    'epsilon': 0.1, # all methods use epsilon greedy 
+    'state_representation' : 'integer'
+    }
+
+MODEL_ARGS = {
+    'FFN' : FFN_ARGS,
+    'RNN' : RNN_ARGS,
+    'tabular' : TAB_ARGS
+    }
+
+# specific to maze environment
+MAZE_ARGS = {
+    'n' : 5,
+    'cycles' : 3,
+    'gamma' : 0.95,
+    'num_iterations' : 100000,
+    }
+
+ENV_ARGS = {
+    'envs:random_maze-v0' : MAZE_ARGS
+}
+
+### Experimental Parameters ###
+np.random.seed(569)
+SEEDS = np.random.randint(0, 10000, size=10)
+MODELS = ['FFN', 'RNN', 'tabular']
+ENV_IDS = ['envs:random_maze-v0'] 
+
+RUNS = {
+    'FFN' : ffn_runs,
+    'RNN' : rnn_runs,
+    'tabular' : tab_runs
+}
+###############################
+
+
+
+def experiments(script_args):
 
     # Count number of runs
     num_runs = 0
     for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
-                model_args = RUNS[model].()
+                model_args = RUNS[model]()
                 for model_arg in model_args:        
                     num_runs+=1
 
@@ -158,51 +166,49 @@ def main(script_args):
     all_args = []
     bash_file_commands = []
 
-     for env_id in ENV_IDS:
+    for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
-                all_model_args = RUNS[model].()
+                all_model_args = RUNS[model]()
                 for model_args in all_model_args:        
                     
-                    general_args = deepcopy(ARGS)
+                    general_args = deepcopy(GENERAL_ARGS)
                     general_args['seed'] = seed
                     general_args['save_path'] = script_args['save_path']
 
-                    run_args = general_args | model_args | ENV_ARGS[env_id] # combine dictionaries
+                    run_args = {**general_args, **model_args, **ENV_ARGS[env_id]}  # combine dictionaries
 
-
-                    if args['output_type'] == 'bash_file':
-                        bash_file_commands.append(to_command(run_args))
+                    if script_args['output_type'] == 'execute':                     
+                        if  script_args['num_threads'] == 1:
+                            main(run_args)
+                            with open('experiments_done_so_far.txt', 'w+') as output:
+                                output.write(to_command(run_args))
                     
-                    elif args['output_type'] == 'execute' and args['num_threads'] == 1:
-                        main_tabular(run_args)
-                        with open('experiments_done_so_far.txt', 'w+') as output:
-                            output.write(to_command(run_args))
+                        elif script_args['num_threads'] != 1:
+                            all_args.append(run_args)
                     
-                    elif args['output_type'] == 'execute' and args['num_threads'] != 1:
-                        all_args.append(run_args)
-                    
-                    elif args['output_type'] == 'compute_canada_format':
+                    else: 
                         bash_file_commands.append(to_command(run_args))
 
-                    if args['num_threads'] == 1:
+                    if script_args['num_threads'] == 1:
                         pbar.update(1)
 
     # run multithreaded experiments
-    if args['output_type'] == 'execute' and  args['num_threads'] != 1:
-        with Pool(args['num_threads']) as p:
-            r = list(tqdm(p.imap(main_tabular, all_args), total=len(all_args)))
+    if script_args['output_type'] == 'execute' and  script_args['num_threads'] != 1:
+        with Pool(script_args['num_threads']) as p:
+            r = list(tqdm(p.imap(main, all_args), total=len(all_args)))
 
-    if args['output_type'] == 'bash_file':
-        with open(args['output_path'] + '.bash', 'w') as output:
+    if script_args['output_type'] == 'bash_file':
+        with open(script_args['output_path'] + '.bash', 'w') as output:
             for row in bash_file_commands:
                 output.write(str(row))
-    elif args['output_type'] == 'compute_canada_format':
-        with open(args['output_path'] + '.txt', 'w') as output: # This .txt file can use a command list for GNU Parallel
+
+    elif script_args['output_type'] == 'compute_canada_format':
+        with open(script_args['output_path'] + '.txt', 'w') as output: # This .txt file can use a command list for GNU Parallel
             for row in bash_file_commands:
                 output.write(str(row))
  
 
 if __name__ == '__main__':
     ARGS = get_args()
-    main(ARGS)
+    experiments(ARGS)

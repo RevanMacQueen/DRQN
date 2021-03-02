@@ -63,8 +63,18 @@ class RNNQNetwork(nn.Module):
         self.num_layers = num_layers
         self.rnn = nn.RNN(self.input_size, self.hidden_state_size, batch_first=True)
         self.fc = nn.Linear(self.hidden_state_size, self.action_size)
+        
+        self.hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
+
 
     def forward(self, x):
+        """
+        Forward pass for training
+        """
+        # in prediction, is this actually using the hidden state?
+        # TODO might need to use https://pytorch.org/docs/stable/generated/torch.nn.utils.rnn.pack_padded_sequence.html#torch.nn.utils.rnn.pack_padded_sequence 
+
+    
         if len(x.shape) < 3:
             x = x.unsqueeze(0)
         # hidden = self.init_hidden(batch_size)
@@ -72,6 +82,16 @@ class RNNQNetwork(nn.Module):
         out = out.view(-1, self.hidden_state_size)
         action_values = self.fc(out)
         return action_values
+
+    def forward_prediction(self, x):
+        out, hidden = self.rnn(x)
+        out = out.view(-1, self.hidden_state_size)
+        action_values = self.fc(out)
+        return action_values
+
+
+
+
 
     def init_hidden(self, batch_size):
         hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
