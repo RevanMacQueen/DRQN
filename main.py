@@ -113,7 +113,7 @@ def main(args):
     for i in tqdm(range(args['num_iterations'])):
         action = agent.act(obs)
         next_obs, reward, done, _ = env.step(action)
-        agent.train_step(next_obs, action, reward, next_obs, done)
+        agent.train_step(obs, action, reward, next_obs, done)
 
         obs = next_obs
         if done: # end of episode
