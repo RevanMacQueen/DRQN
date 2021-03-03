@@ -97,19 +97,20 @@ class RNNReplayBuffer:
 
     def can_sample(self):
         """Determines if a valid batch can be produced from the current buffer. 
-        Returns False if any episode does not meet the sequence length. 
+        Returns True if at least one episode contains enough transitions.
         True otherwise. 
         """
         for episode in self.memory:
-            if len(episode) < self.seq_len:
-                return False
-        return True
+            if len(episode) >= self.seq_len:
+                return True
+        return False
 
     def sample(self):
         """Generate a sample of batch_size elements. Samples episodes with replacement.
         Returns a tuple of the form: (state_sample, action_sample, reward_sample, next_state_sample, done_sample). 
         """
-        episodes = random.choices(self.memory, k=self.batch_size)
+        valid_episodes = [episode for episode in self.memory if len(episode) >= self.seq_len]
+        episodes = random.choices(valid_episodes, k=self.batch_size)
         state_batch = [] 
         action_batch = []
         reward_batch = []
