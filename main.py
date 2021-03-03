@@ -60,6 +60,8 @@ def get_args():
 
     parser.add_argument('--num_iterations', default=10**6, type=int)
 
+    parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
+
     return vars(parser.parse_args())
 
 def main(args):
@@ -72,7 +74,7 @@ def main(args):
         os.makedirs(save_dir)
 
     if args['env'] == 'envs:random_maze-v0':
-        env = RandomMaze(args['n'], args['cycles'], args['seed'])
+        env = RandomMaze(args['n'], args['cycles'], args['seed'], state_representation=args['state_representation'])
     else:
         env = gym.make(args['env'])
 
@@ -88,14 +90,14 @@ def main(args):
 
     # Observation and action sizes
     img = False
-    if len(env.observation_space.shape) == 0:
-        ob_dim = env.observation_space.n
+    if len(env.observation_space.shape) == 0: # discrete state 
+        ob_dim = env.observation_space.n # this is actually the number of states
     elif not img:
         ob_dim = int(np.prod(env.observation_space.shape))
     else:
         ob_dim = env.observation_space.shape 
         
-    
+
     ac_dim = env.action_space.n 
 
     args['input_dim'] = ob_dim
@@ -116,6 +118,8 @@ def main(args):
         obs = next_obs
         if done: # end of episode
             obs = env.reset()
+    
+    env.close()
 
 if __name__ == '__main__':
     args = get_args()

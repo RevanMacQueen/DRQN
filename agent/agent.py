@@ -36,24 +36,24 @@ class Agent():
             
             self.hidden_layer_size = self.agent_params['hidden_layer_size'] 
             self.num_layers = self.agent_params['num_layers']
+            buffer_size = self.agent_params['buffer_size']
+            batch_size = self.agent_params['batch_size']
+            seq_len = self.agent_params['seq_len']
 
             self.qnetwork_local  = RNNQNetwork(
-                self.input_dim, 
+                self.input_dim*seq_len, 
                 self.action_dim, 
                 self.hidden_layer_size, 
                 self.seed).to(device)
 
             self.qnetwork_target  = RNNQNetwork(
-                self.input_dim, 
+                self.input_dim*seq_len, 
                 self.action_dim, 
                 self.hidden_layer_size, 
                 self.seed).to(device)
 
-
-            buffer_size = self.agent_params['buffer_size']
-            batch_size = self.agent_params['batch_size']
-            seq_len = self.agent_params['seq_len']
             self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
+            self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
 
         else:
             raise NotImplementedError
@@ -67,11 +67,10 @@ class Agent():
         self.gamma = self.agent_params['gamma']
         self.tau  = self.agent_params['tau']
 
-    def act(self, obs):
+    def act_FFN(self, obs):
         """
-        Take an returns an action given observation obs
+        Returns an action given observation obs using a FFN
         """
-
         obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
         self.qnetwork_local.eval()
         with torch.no_grad():
@@ -84,6 +83,29 @@ class Agent():
             action =  random.choice(np.arange(self.action_dim))
 
         return action    
+
+    def act_RNN(self, obs):
+        """
+        Returns an action given observation obs using a RNN
+        """
+
+
+        obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
+        
+        with torch.no_grad():
+        
+        self.qnetwork_local.eval()
+        with torch.no_grad():
+            action_values = self.qnetwork_local(obs)
+
+        # Epsilon-greedy action selection
+        if random.random() > self.eps:
+            action = np.argmax(action_values.cpu().data.numpy())
+        else:
+            action =  random.choice(np.arange(self.action_dim))
+
+        return action    
+
 
     def train_step(self, obs, action, reward, next_obs, done, add_new_episode=False):
         """
