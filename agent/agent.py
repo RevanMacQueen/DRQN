@@ -92,8 +92,6 @@ class Agent():
 
         obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
         
-        with torch.no_grad():
-        
         self.qnetwork_local.eval()
         with torch.no_grad():
             action_values = self.qnetwork_local(obs)
