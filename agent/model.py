@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class QNetwork(nn.Module):
     """Actor (Policy) Model."""
 
@@ -64,6 +66,7 @@ class RNNQNetwork(nn.Module):
         self.rnn = nn.RNN(self.input_size, self.hidden_state_size, batch_first=True)
         self.fc = nn.Linear(self.hidden_state_size, self.action_size)
 
+        self.hidden = self.init_hidden(1) # hidden state for prediction, not learning
 
 
     def forward(self, x):
@@ -73,21 +76,27 @@ class RNNQNetwork(nn.Module):
         # in prediction, is this actually using the hidden state?
         # TODO might need to use https://pytorch.org/docs/stable/generated/torch.nn.utils.rnn.pack_padded_sequence.html#torch.nn.utils.rnn.pack_padded_sequence 
 
-    
+        
         if len(x.shape) < 3:
             x = x.unsqueeze(0)
         # hidden = self.init_hidden(batch_size)
+
         out, hidden = self.rnn(x)
-        #out = out.view(-1, self.hidden_state_size)
+        #out = out.view(-1, self.hidden_state_size) # idk what this line does 
         action_values = self.fc(out)
         return action_values
 
     def forward_prediction(self, x):
-        out, hidden = self.rnn(x)
-        out = out.view(-1, self.hidden_state_size)
+         
+        if len(x.shape) < 3:
+            x = x.unsqueeze(0)
+        out, self.hidden = self.rnn(x, self.hidden)
+        #out = out.view(-1, self.hidden_state_size)
+        
         action_values = self.fc(out)
         return action_values
 
+
     def init_hidden(self, batch_size):
-        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
+        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size).to(device)
         return hidden

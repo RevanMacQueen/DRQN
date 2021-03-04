@@ -76,6 +76,8 @@ class Agent():
         with torch.no_grad():
             action_values = self.qnetwork_local(obs)
 
+        self.qnetwork_local.train()
+
         # Epsilon-greedy action selection
         if random.random() > self.eps:
             action = np.argmax(action_values.cpu().data.numpy())
@@ -86,15 +88,15 @@ class Agent():
 
     def act_RNN(self, obs):
         """
-        Returns an action given observation obs using a RNN
+        Returns an action given observation obs using a RNN. The difference with the above funtion is that 
         """
         obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
         
+        self.qnetwork_local.eval()
         with torch.no_grad():
-        
-            self.qnetwork_local.eval()
-        with torch.no_grad():
-            action_values = self.qnetwork_local(obs)
+            action_values = self.qnetwork_local.forward_prediction(obs)
+
+        self.qnetwork_local.train()
 
         # Epsilon-greedy action selection
         if random.random() > self.eps:
@@ -115,6 +117,11 @@ class Agent():
             self.eps = self.eps * 0.99
             if self.eps < self.min_eps:
                 self.eps = self.min_eps
+            
+            if self.agent_params['model_arch'] == 'RNN':
+                self.qnetwork_local.eval()
+                with torch.no_grad():
+                    self.qnetwork_local.hidden = self.qnetwork_local.init_hidden(1) # if end of episode, refresh hidden state
 
 
         self.t_step += 1
