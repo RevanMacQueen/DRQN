@@ -89,10 +89,6 @@ class RNNQNetwork(nn.Module):
         action_values = self.fc(out)
         return action_values
 
-
-
-
-
     def init_hidden(self, batch_size):
         hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
         return hidden

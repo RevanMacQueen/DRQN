@@ -11,18 +11,16 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():  
     def __init__(self, agent_params):
-
-
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.agent_params = agent_params
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
-        self.eps = self.agent_params['epsilon']
         
+        self.eps = self.agent_params['epsilon']
+        self.min_eps =  self.agent_params['min_epsilon']
         
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
-
         if self.agent_params['model_arch'] == 'FFN':
             self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
             self.qnetwork_target = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
@@ -31,6 +29,7 @@ class Agent():
             batch_size = self.agent_params['batch_size']
            
             self.buffer = ReplayBuffer(self.action_dim, buffer_size, batch_size, self.seed)
+            self.act = self.act_FFN
 
         elif self.agent_params['model_arch'] == 'RNN':
             
@@ -54,7 +53,7 @@ class Agent():
 
             self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
             self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
-
+            self.act = self.act_RNN
         else:
             raise NotImplementedError
         
@@ -88,13 +87,11 @@ class Agent():
         """
         Returns an action given observation obs using a RNN
         """
-
-
         obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
         
         with torch.no_grad():
         
-        self.qnetwork_local.eval()
+            self.qnetwork_local.eval()
         with torch.no_grad():
             action_values = self.qnetwork_local(obs)
 
@@ -112,6 +109,12 @@ class Agent():
         Handles agent training. Adds samples to replay buffer and, if appropriate, trains net
         """
         self.buffer.add(obs, action, reward, next_obs, done)
+
+        if done: # if end of episode, decay epsilon by a factor of 0.99
+            self.eps = self.eps * 0.99
+            if self.eps < self.min_eps:
+                self.eps = self.min_eps
+
 
         self.t_step += 1
         if self.t_step >= self.learning_starts and self.buffer.can_sample():
@@ -167,3 +170,7 @@ class Agent():
         """
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
+
+
+
+        

@@ -32,6 +32,8 @@ def get_args():
     
     parser.add_argument('--epsilon', default=0.1, type=float)
 
+    parser.add_argument('--min_epsilon', default=0.1, type=float)
+
     parser.add_argument('--hidden_layer_size', default=64, type=int)  
 
     parser.add_argument('--num_layers', default=1, type=int)  
@@ -84,6 +86,7 @@ def main(args):
     with open(save_dir/'params.json', 'w') as fp:
         json.dump(args, fp)
     
+    env.showPNG()
     seed = args['seed']
     np.random.seed(seed)
     env.seed(seed)
@@ -109,6 +112,9 @@ def main(args):
     else:
         agent = Agent(args)
 
+    c = 0 
+    ep_len = []
+
     obs = env.reset()
     for i in tqdm(range(args['num_iterations'])):
         action = agent.act(obs)
@@ -116,9 +122,15 @@ def main(args):
         agent.train_step(obs, action, reward, next_obs, done)
 
         obs = next_obs
+        c += 1
         if done: # end of episode
+            ep_len.append(c)
+            c = 0
+    
             obs = env.reset()
     
+    plt.plot(ep_len)
+    plt.show()
     env.close()
 
 if __name__ == '__main__':
