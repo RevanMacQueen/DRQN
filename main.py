@@ -46,7 +46,7 @@ def get_args():
 
     parser.add_argument('--target_update_freq', default=1, type=int)
 
-    parser.add_argument('--gamma', default=0.95, type=float)
+    parser.add_argument('--gamma', default=0.99, type=float)
 
     parser.add_argument('--tau', default=1e-3, type=float) 
     
