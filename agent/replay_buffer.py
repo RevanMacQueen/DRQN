@@ -128,7 +128,7 @@ class RNNReplayBuffer:
             done_batch.append(np.vstack([e.done for e in experiences if e is not None]))
 
         state_batch = torch.from_numpy(np.stack(state_batch)).float().to(device)
-        action_batch = torch.from_numpy(np.stack(action_batch)).float().to(device)
+        action_batch = torch.from_numpy(np.stack(action_batch)).long().to(device)
         reward_batch = torch.from_numpy(np.stack(reward_batch)).float().to(device)
         next_state_batch = torch.from_numpy(np.stack(next_state_batch)).float().to(device)
         done_batch = torch.from_numpy(np.stack(done_batch)).float().to(device)

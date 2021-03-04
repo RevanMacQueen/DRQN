@@ -63,8 +63,7 @@ class RNNQNetwork(nn.Module):
         self.num_layers = num_layers
         self.rnn = nn.RNN(self.input_size, self.hidden_state_size, batch_first=True)
         self.fc = nn.Linear(self.hidden_state_size, self.action_size)
-        
-        self.hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size)
+
 
 
     def forward(self, x):
@@ -79,7 +78,7 @@ class RNNQNetwork(nn.Module):
             x = x.unsqueeze(0)
         # hidden = self.init_hidden(batch_size)
         out, hidden = self.rnn(x)
-        out = out.view(-1, self.hidden_state_size)
+        #out = out.view(-1, self.hidden_state_size)
         action_values = self.fc(out)
         return action_values
 

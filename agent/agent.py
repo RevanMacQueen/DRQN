@@ -40,13 +40,13 @@ class Agent():
             seq_len = self.agent_params['seq_len']
 
             self.qnetwork_local  = RNNQNetwork(
-                self.input_dim*seq_len, 
+                self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
                 self.seed).to(device)
 
             self.qnetwork_target  = RNNQNetwork(
-                self.input_dim*seq_len, 
+                self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
                 self.seed).to(device)
@@ -54,6 +54,7 @@ class Agent():
             self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
             self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
             self.act = self.act_RNN
+            self.learn = self.learnRNN
         else:
             raise NotImplementedError
         
@@ -121,6 +122,42 @@ class Agent():
             if self.t_step % self.learning_freq == 0:
                 experiences = self.buffer.sample()
                 self.learn(experiences)
+
+
+    def learnRNN(self, experiences):
+        """Update value parameters using given batch of experience tuples.
+
+        Params:
+            experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples 
+        """
+        states, actions, rewards, next_states, dones = experiences
+
+        # get targets
+        self.qnetwork_target.eval()
+        with torch.no_grad():
+            Q_targets_next = torch.max(self.qnetwork_target.forward(next_states), dim=2, keepdim=True)[0]
+
+        Q_targets = rewards + (self.gamma  * Q_targets_next * (1 - dones))
+
+        # get outputs
+        self.qnetwork_local.train()
+        Q_expected = self.qnetwork_local.forward(states).gather(2, actions)
+
+        # compute loss
+        loss = F.mse_loss(Q_expected, Q_targets)
+
+        # clear gradients
+        self.optimizer.zero_grad()
+
+        # update weights local network
+        loss.backward()
+
+        # take one SGD step
+        self.optimizer.step()
+
+        # ------------------- update target network ------------------- #
+        if self.t_step % self.target_update_freq == 0:
+            self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
 
 
     def learn(self, experiences):

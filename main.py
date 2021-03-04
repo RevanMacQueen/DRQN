@@ -86,7 +86,7 @@ def main(args):
     with open(save_dir/'params.json', 'w') as fp:
         json.dump(args, fp)
     
-    env.showPNG()
+    #env.showPNG()
     seed = args['seed']
     np.random.seed(seed)
     env.seed(seed)
