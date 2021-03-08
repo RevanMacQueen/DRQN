@@ -17,8 +17,7 @@ class Agent():
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
         
-        self.eps = self.agent_params['epsilon']
-        self.min_eps =  self.agent_params['min_epsilon']
+
         
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
         if self.agent_params['model_arch'] == 'FFN':
@@ -64,6 +63,9 @@ class Agent():
         self.learning_starts = self.agent_params['learning_starts']
         self.learning_freq = self.agent_params['learning_freq']
         self.target_update_freq = self.agent_params['target_update_freq']
+        self.eps = self.agent_params['epsilon']
+        self.min_eps =  self.agent_params['min_epsilon']
+        self.decay = self.agent_params['decay']
         self.gamma = self.agent_params['gamma']
         self.tau  = self.agent_params['tau']
 
@@ -114,7 +116,7 @@ class Agent():
         self.buffer.add(obs, action, reward, next_obs, done)
 
         if done: # if end of episode, decay epsilon by a factor of 0.99
-            self.eps = self.eps * 0.99
+            self.eps = self.eps * self.decay
             if self.eps < self.min_eps:
                 self.eps = self.min_eps
             

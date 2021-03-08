@@ -2,6 +2,7 @@ from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
 import os
+import time
 import json
 import argparse
 
@@ -14,6 +15,16 @@ import matplotlib.pyplot as plt
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
 from envs.random_maze import RandomMaze
+
+def to_command(dic):
+    command = 'python3 main.py'
+    for key, value in dic.items():
+        if key == 'only_reward' or key =='save_recording' :
+            command += ' --{}'.format(key)
+        else:
+            command += ' --{} {}'.format(key, value)
+
+    return command + '\n'
 
 def get_args():
     parser = argparse.ArgumentParser(description='Parameters for RNN agent and environment')
@@ -31,6 +42,8 @@ def get_args():
     parser.add_argument('--learning_rate', default=5e-4, type=float)
     
     parser.add_argument('--epsilon', default=0.1, type=float)
+
+    parser.add_argument('--decay', default=0.99, type=float, help="Scalar which determines how much to decay epsilon each episode")
 
     parser.add_argument('--min_epsilon', default=0.1, type=float)
 
@@ -55,6 +68,8 @@ def get_args():
     parser.add_argument('--save_recording', default=False, action='store_true', help = "Whether to record interactions" )
 
     parser.add_argument('--only_reward', default=False, action='store_true', help = "Whether to only record rewards" )
+
+    parser.add_argument('--show_pbar', default=False, action='store_true', help = "Whether to show progress bar" )
 
     parser.add_argument('--n', default=5, type=int, help="size of random maze")
 
@@ -100,39 +115,46 @@ def main(args):
     else:
         ob_dim = env.observation_space.shape 
         
-
     ac_dim = env.action_space.n 
-
     args['input_dim'] = ob_dim
     args['action_dim'] = ac_dim
-
 
     if args['model_arch'] == 'tabular':
         agent = TabularAgent(args)
     else:
         agent = Agent(args)
 
-    c = 0 
-    ep_len = []
-
+    step_counter = 0 # counter for length of episodes 
+    episode_lengths = [] # list of episode length
+    start_time = time.time()
     obs = env.reset()
-    for i in tqdm(range(args['num_iterations'])):
+
+
+    itr = tqdm(range(args['num_iterations'])) if args['show_pbar'] else range(args['num_iterations'])
+
+    for i in itr:
         action = agent.act(obs)
         next_obs, reward, done, _ = env.step(action)
         agent.train_step(obs, action, reward, next_obs, done)
-
         obs = next_obs
-        c += 1
+
+        step_counter += 1
         if done: # end of episode
-            ep_len.append(c)
-            c = 0
-    
+            episode_lengths.append(step_counter)
+            step_counter = 0
             obs = env.reset()
     
-    plt.plot(ep_len)
-    plt.show()
     env.close()
+
+    end_time = time.time()
+    np.save(save_dir/'episode_lengths.npy', episode_lengths )
+    np.save(save_dir/'time.npy', np.array(end_time-start_time))
+
+    # log experiments that finished 
+    with open('experiments_done.txt', 'w+') as output:
+        output.write(to_command(args))
 
 if __name__ == '__main__':
     args = get_args()
     main(args)
+
