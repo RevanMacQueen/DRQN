@@ -12,21 +12,72 @@ from main import main
 from copy import deepcopy
 from tqdm import tqdm
 from multiprocessing import Pool
+import itertools
 
+def get_arg_list(params, constraints):
+    """
+    Returns a list of dictionaries of hyperparameter settings
+    """
 
-def ffn_runs():
+    def satisfies_constraints(setting):
+        satisfies = True
+        for c in constraints:
+            if c(setting) == False:
+                return False
+        return True
+
+    product = itertools.product(*[p[1] for p in params])
+
+    arg_list = []
+    for setting in product: # for each setting of parameters
+        args = deepcopy(FFN_ARGS)
+
+        if satisfies_constraints(setting):
+            for param_idx in range(len(setting)):
+                param_name = params[param_idx][0]
+                args[param_name] = setting[param_idx]
+            arg_list.append(args)
+
+    return arg_list
+
+def ffn_runs(env):
     """
     Returns a list of all different ffn configurations to run 
     """
-    return [FFN_ARGS]
 
-def rnn_runs():
+    # different parameters to vary, first entry is name of parameter, second is possible values
+
+    params = [
+        ['learning_freq', [1, 10, 100, 1000, 10000]],
+        ['target_update_freq', [1, 10, 100, 1000, 10000]]
+    ]
+
+    constraints = [
+        lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
+        ]
+
+
+    return get_arg_list(params, constraints)
+
+def rnn_runs(env):
     """
     Returns a list of all different rnn configurations to run 
     """
-    return [RNN_ARGS]
+    params = [
+        ['learning_freq', [1, 10, 100, 1000, 10000]],
+        ['target_update_freq', [1, 10, 100, 1000, 10000]]
+        #['seq_len', [1, 2, 4, 8]]
+    ]
 
-def tab_runs():
+    constraints = [
+        lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
+        ]
+
+
+    return get_arg_list(params, constraints)
+
+
+def tab_runs(env):
     """
     Returns a list of all different rnn configurations to run 
     """
@@ -71,11 +122,13 @@ GENERAL_ARGS = {
     'seed' : 1,
     'save_path': 'results',
     'save_recording' : True,
-    'only_reward' : True
+    'only_reward' : True,
+    'show_pbar' : False,
+    'env' : 'envs:random_maze-v0'
    }
 
 
-# Arguments for RNN
+# default Arguments for RNN
 RNN_ARGS = {
     'model_arch' : 'RNN',
     'buffer_size' : 10000,
@@ -84,15 +137,17 @@ RNN_ARGS = {
     'num_layers' : 1,
     'seq_len' : 10,
     'tau' : 1e-3,
-    'learning_starts': 1000,
+    'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
     'learning_rate' : 5e-4,
-    'epsilon': 0.1, # all methods use epsilon greedy 
+    'epsilon': 1, # all methods use epsilon greedy 
+    'min_epsilon' : 0.01,
+    'decay' : 0.99,
     'state_representation' : 'one_hot'
     }
 
-# Arguments for FFN
+# default Arguments for FFN
 FFN_ARGS = {
     'model_arch' : 'FFN',
     'buffer_size' : 10000,
@@ -100,11 +155,13 @@ FFN_ARGS = {
     'hidden_layer_size' : 64,
     'num_layers' : 1,
     'tau' : 1e-3,
-    'learning_starts': 1000,
+    'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
     'learning_rate' : 5e-4,
-    'epsilon': 0.1, # all methods use epsilon greedy
+    'epsilon': 1, # all methods use epsilon greedy
+    'min_epsilon' : 0.01,
+    'decay' : 0.99,
     'state_representation' : 'one_hot'
     }
 
@@ -127,18 +184,30 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     }
 
+CARTPOLE_ARGS = {
+    'num_iterations' : 1000,
+    'gamma' : 0.99
+}
+
+MOUNTAINCAR_ARGS = {
+    'num_iterations' : 1000,
+    'gamma' : 0.95
+}
+
 ENV_ARGS = {
-    'envs:random_maze-v0' : MAZE_ARGS
+    'envs:random_maze-v0' : MAZE_ARGS,
+    'CartPole-v1' : CARTPOLE_ARGS, # no extra arguments needed
+    'MountainCar-v0' : MOUNTAINCAR_ARGS # no extra arguments needed
 }
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=10)
+SEEDS = np.random.randint(0, 10000, size=1)
 MODELS = ['FFN', 'RNN', 'tabular']
-ENV_IDS = ['envs:random_maze-v0'] 
+ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
 RUNS = {
     'FFN' : ffn_runs,
@@ -148,15 +217,13 @@ RUNS = {
 ###############################
 
 
-
 def experiments(script_args):
-
     # Count number of runs
     num_runs = 0
     for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
-                model_args = RUNS[model]()
+                model_args = RUNS[model](env_id)
                 for model_arg in model_args:        
                     num_runs+=1
 
@@ -169,20 +236,19 @@ def experiments(script_args):
     for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
-                all_model_args = RUNS[model]()
+                all_model_args = RUNS[model](env_id)
                 for model_args in all_model_args:        
                     
                     general_args = deepcopy(GENERAL_ARGS)
-                    general_args['seed'] = seed
+                    general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
                     general_args['save_path'] = script_args['save_path']
+                    general_args['env'] = env_id
 
                     run_args = {**general_args, **model_args, **ENV_ARGS[env_id]}  # combine dictionaries
 
                     if script_args['output_type'] == 'execute':                     
-                        if  script_args['num_threads'] == 1:
+                        if script_args['num_threads'] == 1:
                             main(run_args)
-                            with open('experiments_done_so_far.txt', 'w+') as output:
-                                output.write(to_command(run_args))
                     
                         elif script_args['num_threads'] != 1:
                             all_args.append(run_args)
@@ -196,6 +262,7 @@ def experiments(script_args):
     # run multithreaded experiments
     if script_args['output_type'] == 'execute' and  script_args['num_threads'] != 1:
         with Pool(script_args['num_threads']) as p:
+            
             r = list(tqdm(p.imap(main, all_args), total=len(all_args)))
 
     if script_args['output_type'] == 'bash_file':
