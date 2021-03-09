@@ -2,9 +2,6 @@
 Script for generating an array of experiments. Can either be run local (single or multithreaded) or on compute canada
 """
 
-"""
-Generates tabular experiments. Can either run them using this the --execute flag or output to a .txt file
-"""
 
 import numpy as np
 import argparse
@@ -13,6 +10,8 @@ from copy import deepcopy
 from tqdm import tqdm
 from multiprocessing import Pool
 import itertools
+
+from utils.utils import to_command
 
 def get_arg_list(params, constraints):
     """
@@ -83,16 +82,6 @@ def tab_runs(env):
     """
     return [TAB_ARGS]
 
-
-def to_command(dic):
-    command = 'python3 main.py'
-    for key, value in dic.items():
-        if key == 'only_reward' or key =='save_recording' :
-            command += ' --{}'.format(key)
-        else:
-            command += ' --{} {}'.format(key, value)
-
-    return command + '\n'
 
 def get_args(): 
     """
@@ -184,16 +173,16 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     'gamma' : 0.99
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     'gamma' : 0.95
 }
 
@@ -205,8 +194,8 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=1)
-MODELS = ['FFN', 'RNN', 'tabular']
+SEEDS = np.random.randint(0, 10000, size=10)
+MODELS = ['FFN', 'RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
 RUNS = {
