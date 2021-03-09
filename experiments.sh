@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --array=1-600
 #SBATCH --time=01:00:00
-#SBATCH --mem=2G
+#SBATCH --mem=4G
 #SBATCH --account=def-jrwright
 #SBATCH --mail-user=revan@ualberta.ca 
 #SBATCH --gres=gpu:1 
