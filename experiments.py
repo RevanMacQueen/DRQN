@@ -13,7 +13,7 @@ import itertools
 
 from utils.utils import to_command
 
-def get_arg_list(params, constraints):
+def get_arg_list(params, constraints, init_args):
     """
     Returns a list of dictionaries of hyperparameter settings
     """
@@ -29,7 +29,7 @@ def get_arg_list(params, constraints):
 
     arg_list = []
     for setting in product: # for each setting of parameters
-        args = deepcopy(FFN_ARGS)
+        args = deepcopy(init_args)
 
         if satisfies_constraints(setting):
             for param_idx in range(len(setting)):
@@ -51,12 +51,13 @@ def ffn_runs(env):
         ['target_update_freq', [1, 10, 100, 1000]]
     ]
 
+
     constraints = [
         lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
         ]
 
 
-    return get_arg_list(params, constraints)
+    return get_arg_list(params, constraints, FFN_ARGS)
 
 def rnn_runs(env):
     """
@@ -65,7 +66,6 @@ def rnn_runs(env):
     params = [
         ['learning_freq', [1, 10, 100, 1000]],
         ['target_update_freq', [1, 10, 100, 1000]]
-        #['seq_len', [1, 2, 4, 8]]
     ]
 
     constraints = [
@@ -73,7 +73,7 @@ def rnn_runs(env):
         ]
 
 
-    return get_arg_list(params, constraints)
+    return get_arg_list(params, constraints, RNN_ARGS)
 
 
 def tab_runs(env):
@@ -173,16 +173,16 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     'gamma' : 0.99
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     'gamma' : 0.95
 }
 
