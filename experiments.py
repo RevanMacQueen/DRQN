@@ -47,8 +47,8 @@ def ffn_runs(env):
     # different parameters to vary, first entry is name of parameter, second is possible values
 
     params = [
-        ['learning_freq', [1, 10, 100, 1000, 10000]],
-        ['target_update_freq', [1, 10, 100, 1000, 10000]]
+        ['learning_freq', [1, 10, 100, 1000]],
+        ['target_update_freq', [1, 10, 100, 1000]]
     ]
 
     constraints = [
@@ -63,8 +63,8 @@ def rnn_runs(env):
     Returns a list of all different rnn configurations to run 
     """
     params = [
-        ['learning_freq', [1, 10, 100, 1000, 10000]],
-        ['target_update_freq', [1, 10, 100, 1000, 10000]]
+        ['learning_freq', [1, 10, 100, 1000]],
+        ['target_update_freq', [1, 10, 100, 1000]]
         #['seq_len', [1, 2, 4, 8]]
     ]
 
