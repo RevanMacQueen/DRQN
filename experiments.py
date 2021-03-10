@@ -173,16 +173,16 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     'gamma' : 0.99
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     'gamma' : 0.95
 }
 
