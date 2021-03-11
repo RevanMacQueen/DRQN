@@ -136,8 +136,9 @@ def main(args):
             step_counter = 0
             obs = env.reset()
     
+    episode_lengths.append(step_counter) # for the final episode
+    
     env.close()
-
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
