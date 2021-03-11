@@ -5,6 +5,7 @@ import os
 import time
 import json
 import argparse
+import copy
 
 import numpy as np
 
@@ -108,13 +109,15 @@ def main(args):
         ob_dim = env.observation_space.shape 
         
     ac_dim = env.action_space.n 
-    args['input_dim'] = ob_dim
-    args['action_dim'] = ac_dim
+
+    agent_args = copy.deepcopy(args)
+    agent_args['input_dim'] = ob_dim
+    agent_args['action_dim'] = ac_dim
 
     if args['model_arch'] == 'tabular':
-        agent = TabularAgent(args)
+        agent = TabularAgent(agent_args)
     else:
-        agent = Agent(args)
+        agent = Agent(agent_args)
 
     step_counter = 0 # counter for length of episodes 
     episode_lengths = [] # list of episode length
