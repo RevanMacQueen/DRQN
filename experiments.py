@@ -173,16 +173,16 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     'gamma' : 0.99
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 100000,
+    'num_iterations' : 1000,
     'gamma' : 0.95
 }
 
@@ -194,7 +194,7 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=10)
+SEEDS = np.random.randint(0, 10000, size=1)
 MODELS = ['FFN', 'RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
