@@ -41,6 +41,7 @@ def plot_timesteps(params: np.array, data: np.array, row=None, col=None, plot=No
                 ax.set_title('%s, %s' % (rowdict.get(row_param, row_param), coldict.get(col_param, col_param)))
                 ax.set_xlabel(xlabel)
                 ax.set_ylabel(ylabel)
+                ax.yscale('log')
             
             col_idx += 1
         row_idx += 1
@@ -64,7 +65,7 @@ def plot_episode_len(params: np.array, data: np.array, row=None, col=None, plot=
     nrows = np.unique(params[:, row]).shape[0]
     ncols = np.unique(params[:, col]).shape[0]
 
-    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=False, sharey=False, squeeze=False)
+    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=False, sharey=False, squeeze=False, figsize=(10,10))
 
     row_idx = 0
     for row_param in np.unique(params[:, row]):
@@ -87,7 +88,8 @@ def plot_episode_len(params: np.array, data: np.array, row=None, col=None, plot=
                 ax.set_title('%s, %s' % (rowdict.get(row_param, row_param), coldict.get(col_param, col_param)))
                 ax.set_xlabel(xlabel)
                 ax.set_ylabel(ylabel)
-
+                ax.set_yscale('log')
+                
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
                 
