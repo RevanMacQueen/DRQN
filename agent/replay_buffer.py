@@ -7,7 +7,7 @@ Created on Sat Feb  6 13:21:30 2021
 """
 import random
 from collections import namedtuple, deque
-
+from torch.nn.utils.rnn import pack_sequence
 import numpy as np
 import torch
 
@@ -76,7 +76,7 @@ class RNNReplayBuffer:
         self.memory.append([])
         self.batch_size = batch_size
         self.seq_len = seq_len
-        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
+        self.experience = namedtuple("Experience", field_names=["state", "hidden", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
 
     def add_episode(self, episode=None):
@@ -87,10 +87,10 @@ class RNNReplayBuffer:
         else:
             self.memory.append([])
 
-    def add(self, state, action, reward, next_state, done):
+    def add(self, state, hidden, action, reward, next_state, done):
         """Add a new piece of experience to the replay buffer. The experience is added to the most recent episode
         """
-        e = self.experience(state, action, reward, next_state, done)
+        e = self.experience(state, hidden, action, reward, next_state, done)
         self.memory[-1].append(e)
         if done:
             self.memory.append([])
@@ -109,30 +109,45 @@ class RNNReplayBuffer:
         """Generate a sample of batch_size elements. Samples episodes with replacement.
         Returns a tuple of the form: (state_sample, action_sample, reward_sample, next_state_sample, done_sample). 
         """
-        valid_episodes = [episode for episode in self.memory if len(episode) >= self.seq_len]
+        #valid_episodes = [episode for episode in self.memory if len(episode) >= self.seq_len]
+        valid_episodes = [episode for episode in self.memory if len(episode) > 1]
         episodes = random.choices(valid_episodes, k=self.batch_size)
         state_batch = [] 
+        h0_batch = []    # initial hidden state for each sequence
+        h1_batch = []    # initial hidden state for S_t+1 (needed for bootstrapping) 
         action_batch = []
         reward_batch = []
         next_state_batch = []
         done_batch = []
 
         for episode in episodes:
-            seq_start = random.randint(0, len(episode)-self.seq_len)
-            experiences = episode[seq_start:seq_start+self.seq_len]
+            #seq_start = random.randint(0, len(episode)-self.seq_len)
+            #experiences = episode[seq_start:seq_start+self.seq_len]
+            seq_start = random.randint(0, len(episode)-2)    # -2 to ensure we can sample at least S_t and S_t+1
+            if seq_start+self.seq_len<len(episode):
+                experiences = episode[seq_start:seq_start+self.seq_len]
+            else:
+                experiences = episode[seq_start:]
+            
+            #reward_batch.append(np.vstack([e.reward for e in experiences if e is not None]))
+            state_batch.append(torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])))
+            h0_batch.append(experiences[0].hidden)
+            h1_batch.append(experiences[1].hidden)
+            action_batch.append(torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])))
+            reward_batch.append(torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])))
+            next_state_batch.append(torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])))
+            done_batch.append(torch.from_numpy(np.vstack([e.done for e in experiences if e is not None])))
 
-            state_batch.append(np.vstack([e.state for e in experiences if e is not None]))
-            action_batch.append(np.vstack([e.action for e in experiences if e is not None]))
-            reward_batch.append(np.vstack([e.reward for e in experiences if e is not None]))
-            next_state_batch.append(np.vstack([e.next_state for e in experiences if e is not None]))
-            done_batch.append(np.vstack([e.done for e in experiences if e is not None]))
-
-        state_batch = torch.from_numpy(np.stack(state_batch)).float().to(device)
-        action_batch = torch.from_numpy(np.stack(action_batch)).long().to(device)
-        reward_batch = torch.from_numpy(np.stack(reward_batch)).float().to(device)
-        next_state_batch = torch.from_numpy(np.stack(next_state_batch)).float().to(device)
-        done_batch = torch.from_numpy(np.stack(done_batch)).float().to(device)
-        return (state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+        state_batch = pack_sequence(state_batch,enforce_sorted=False).float().to(device)
+        #h0_batch = pack_sequence(h0_batch,enforce_sorted=False).float().to(device)
+        #h1_batch = pack_sequence(h1_batch,enforce_sorted=False).float().to(device)
+        h0_batch = torch.cat(h0_batch,dim=1).float().to(device)
+        h1_batch = torch.cat(h1_batch,dim=1).float().to(device)
+        action_batch = torch.nn.utils.rnn.pad_sequence(action_batch,batch_first=True).long().to(device)
+        reward_batch = torch.nn.utils.rnn.pad_sequence(reward_batch,batch_first=True).float().to(device)
+        next_state_batch = pack_sequence(next_state_batch,enforce_sorted=False).float().to(device)
+        done_batch = torch.nn.utils.rnn.pad_sequence(done_batch,batch_first=True).float().to(device)
+        return (state_batch, h0_batch, h1_batch, action_batch, reward_batch, next_state_batch, done_batch)
 
     def __len__(self):
         """Returns the total number of experiences in the buffer across all episodes.

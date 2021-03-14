@@ -69,7 +69,7 @@ class RNNQNetwork(nn.Module):
         self.hidden = self.init_hidden(1) # hidden state for prediction, not learning
 
 
-    def forward(self, x):
+    def forward(self, x, h0):
         """
         Forward pass for training
         """
@@ -77,14 +77,16 @@ class RNNQNetwork(nn.Module):
         # TODO might need to use https://pytorch.org/docs/stable/generated/torch.nn.utils.rnn.pack_padded_sequence.html#torch.nn.utils.rnn.pack_padded_sequence 
 
         
-        if len(x.shape) < 3:
-            x = x.unsqueeze(0)
+        # if len(x.shape) < 3:
+        #     x = x.unsqueeze(0)
         # hidden = self.init_hidden(batch_size)
 
-        out, hidden = self.rnn(x)
+        out, hidden = self.rnn(x,h0)
+        #self.hidden = hidden
         #out = out.view(-1, self.hidden_state_size) # idk what this line does 
-        action_values = self.fc(out)
-        return action_values
+        unpacked_out = torch.nn.utils.rnn.pad_packed_sequence(out, batch_first=True, padding_value=0.0)
+        action_values = self.fc(unpacked_out[0])
+        return action_values, unpacked_out[1]
 
     def forward_prediction(self, x):
          
