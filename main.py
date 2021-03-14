@@ -5,7 +5,6 @@ import os
 import time
 import json
 import argparse
-import copy
 
 import numpy as np
 
@@ -16,6 +15,7 @@ import matplotlib.pyplot as plt
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
 from envs.random_maze import RandomMaze
+from envs.T_maze import TMaze
 from utils.utils import to_command
 
 
@@ -24,21 +24,21 @@ def get_args():
 
     parser.add_argument('--seed', default=1, type=int, nargs='?')
 
-    parser.add_argument('--env', default='envs:random_maze-v0', type=str)
+    parser.add_argument('--env', default='envs:T_maze-v0', type=str)
     
     parser.add_argument('--model_arch', default='RNN', type=str, help="Type of agent. Options: RNN, FFN, tabular")
 
-    parser.add_argument('--buffer_size', default=10000, type=int)
+    parser.add_argument('--buffer_size', default=200, type=int)
 
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--batch_size', default=16, type=int)
 
-    parser.add_argument('--learning_rate', default=5e-4, type=float)
+    parser.add_argument('--learning_rate', default=5e-5, type=float)
     
     parser.add_argument('--epsilon', default=0.1, type=float)
 
     parser.add_argument('--decay', default=0.99, type=float, help="Scalar which determines how much to decay epsilon each episode")
 
-    parser.add_argument('--min_epsilon', default=0.1, type=float)
+    parser.add_argument('--min_epsilon', default=0.01, type=float)
 
     parser.add_argument('--hidden_layer_size', default=64, type=int)  
 
@@ -46,7 +46,7 @@ def get_args():
 
     parser.add_argument('--seq_len', default=10, type=int)  
 
-    parser.add_argument('--learning_starts', default=50000, type=int)
+    parser.add_argument('--learning_starts', default=64, type=int)
 
     parser.add_argument('--learning_freq', default=1, type=int)
 
@@ -62,13 +62,13 @@ def get_args():
 
     parser.add_argument('--only_reward', default=False, action='store_true', help = "Whether to only record rewards" )
 
-    parser.add_argument('--show_pbar', default=False, type=bool, help = "Whether to show progress bar" )
+    parser.add_argument('--show_pbar', default=True, type=bool, help = "Whether to show progress bar" )
 
-    parser.add_argument('--n', default=5, type=int, help="size of random maze")
+    parser.add_argument('--n', default=1, type=int, help="size of random maze")
 
     parser.add_argument('--cycles', default=3, type=int, help="number of cycles in random maze")
 
-    parser.add_argument('--num_iterations', default=10**6, type=int)
+    parser.add_argument('--num_iterations', default=6000, type=int)
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
 
@@ -85,6 +85,8 @@ def main(args):
 
     if args['env'] == 'envs:random_maze-v0':
         env = RandomMaze(args['n'], args['cycles'], args['seed'], state_representation=args['state_representation'])
+    elif args['env'] == 'envs:T_maze-v0':
+        env = TMaze(args['n'])
     else:
         env = gym.make(args['env'])
 
@@ -107,23 +109,24 @@ def main(args):
         ob_dim = int(np.prod(env.observation_space.shape))
     else:
         ob_dim = env.observation_space.shape 
-        
+    
+    
+    
     ac_dim = env.action_space.n 
-
-    agent_args = copy.deepcopy(args)
-    agent_args['input_dim'] = ob_dim
-    agent_args['action_dim'] = ac_dim
+    args['input_dim'] = ob_dim
+    args['action_dim'] = ac_dim
 
     if args['model_arch'] == 'tabular':
-        agent = TabularAgent(agent_args)
+        agent = TabularAgent(args)
     else:
-        agent = Agent(agent_args)
+        agent = Agent(args)
 
     step_counter = 0 # counter for length of episodes 
     episode_lengths = [] # list of episode length
     start_time = time.time()
     obs = env.reset()
-
+    ret = 0 # return for each episode
+    episode_rets = [] # list of returns
 
     itr = tqdm(range(args['num_iterations'])) if args['show_pbar'] else range(args['num_iterations'])
 
@@ -134,16 +137,21 @@ def main(args):
         obs = next_obs
 
         step_counter += 1
+        ret += reward
+        # if i > 3000:
+        #     print('check replay buffer')
         if done: # end of episode
             episode_lengths.append(step_counter)
+            episode_rets.append(ret)
             step_counter = 0
+            ret = 0
             obs = env.reset()
     
-    episode_lengths.append(step_counter) # for the final episode
-    
     env.close()
+
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
+    np.save(save_dir/'episode_rets.npy', episode_rets )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
 
     # log experiments that finished 
