@@ -16,7 +16,7 @@ class Agent():
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
-        
+        self.batch_size = self.agent_params['batch_size']
 
         
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
@@ -113,7 +113,11 @@ class Agent():
         """
         Handles agent training. Adds samples to replay buffer and, if appropriate, trains net
         """
-        self.buffer.add(obs, action, reward, next_obs, done)
+        if self.agent_params['model_arch'] == 'RNN':
+            hidden = self.qnetwork_local.hidden
+            self.buffer.add(obs, hidden, action, reward, next_obs, done)
+        else:
+            self.buffer.add(obs, action, reward, next_obs, done)
 
         if done: # if end of episode, decay epsilon by a factor of 0.99
             self.eps = self.eps * self.decay
@@ -122,12 +126,14 @@ class Agent():
             
             if self.agent_params['model_arch'] == 'RNN':
                 self.qnetwork_local.eval()
+                self.qnetwork_target.eval()
                 with torch.no_grad():
                     self.qnetwork_local.hidden = self.qnetwork_local.init_hidden(1) # if end of episode, refresh hidden state
-
+                    self.qnetwork_target.hidden = self.qnetwork_target.init_hidden(1) # if end of episode, refresh hidden state
 
         self.t_step += 1
-        if self.t_step >= self.learning_starts and self.buffer.can_sample():
+        #if self.t_step >= self.learning_starts and self.buffer.can_sample():
+        if self.t_step >= self.learning_starts:
             if self.t_step % self.learning_freq == 0:
                 experiences = self.buffer.sample()
                 self.learn(experiences)
@@ -139,21 +145,32 @@ class Agent():
         Params:
             experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples 
         """
-        states, actions, rewards, next_states, dones = experiences
+        states, h0s, h1s, actions, rewards, next_states, dones = experiences
 
         # get targets
         self.qnetwork_target.eval()
         with torch.no_grad():
-            Q_targets_next = torch.max(self.qnetwork_target.forward(next_states), dim=2, keepdim=True)[0]
+            # the max doesn't necessarily come from a non-padding element in the sequence
+            Q_vps, seq_lens = self.qnetwork_target.forward(next_states, h1s)
+            Q_targets_next = torch.max(Q_vps, dim=2, keepdim=True)[0]
 
         Q_targets = rewards + (self.gamma  * Q_targets_next * (1 - dones))
-
+        
+        # extract unpadded seqs and then pack
+        Q_targets = [Q_targets[i,:seq_lens[i]] for i in range(len(Q_targets))]
+        Q_targets = torch.nn.utils.rnn.pack_sequence(Q_targets,enforce_sorted=False)
+        
         # get outputs
         self.qnetwork_local.train()
-        Q_expected = self.qnetwork_local.forward(states).gather(2, actions)
+        Q_expected, seq_lens = self.qnetwork_local.forward(states, h0s)
+        Q_expected = Q_expected.gather(2, actions)
+
+        # extract unpadded seqs and then pack
+        Q_expected = [Q_expected[i,:seq_lens[i]] for i in range(len(Q_expected))]
+        Q_expected = torch.nn.utils.rnn.pack_sequence(Q_expected,enforce_sorted=False)
 
         # compute loss
-        loss = F.mse_loss(Q_expected, Q_targets)
+        loss = F.mse_loss(Q_expected[0], Q_targets[0])
 
         # clear gradients
         self.optimizer.zero_grad()
