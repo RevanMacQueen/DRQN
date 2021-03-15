@@ -7,18 +7,15 @@ import torch.optim as optim
 from agent.model import QNetwork, RNNQNetwork
 from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device('cpu')
 class Agent():  
     def __init__(self, agent_params):
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.agent_params = agent_params
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
-        
 
-        
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
         if self.agent_params['model_arch'] == 'FFN':
             self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)

@@ -8,8 +8,8 @@ Created on Sat Feb  6 13:20:34 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device('cpu')
 
 class QNetwork(nn.Module):
     """Actor (Policy) Model."""
