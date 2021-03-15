@@ -54,7 +54,7 @@ class RandomMaze(Env):
         if state_representation == 'integer':
             self.gen_state = self.gen_integer_state
             self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
-        if state_representation == 'one_hot':
+        elif state_representation == 'one_hot':
             self.gen_state = self.gen_one_hot_state
             self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
             self.observation_space = spaces.Box(low=0, high=1, shape = (np.prod(self.grid.shape), ), dtype=np.int8) 
