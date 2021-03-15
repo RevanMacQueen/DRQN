@@ -2,9 +2,6 @@
 Script for generating an array of experiments. Can either be run local (single or multithreaded) or on compute canada
 """
 
-"""
-Generates tabular experiments. Can either run them using this the --execute flag or output to a .txt file
-"""
 
 import numpy as np
 import argparse
@@ -14,7 +11,9 @@ from tqdm import tqdm
 from multiprocessing import Pool
 import itertools
 
-def get_arg_list(params, constraints):
+from utils.utils import to_command
+
+def get_arg_list(params, constraints, init_args):
     """
     Returns a list of dictionaries of hyperparameter settings
     """
@@ -30,7 +29,7 @@ def get_arg_list(params, constraints):
 
     arg_list = []
     for setting in product: # for each setting of parameters
-        args = deepcopy(FFN_ARGS)
+        args = deepcopy(init_args)
 
         if satisfies_constraints(setting):
             for param_idx in range(len(setting)):
@@ -48,25 +47,25 @@ def ffn_runs(env):
     # different parameters to vary, first entry is name of parameter, second is possible values
 
     params = [
-        ['learning_freq', [1, 10, 100, 1000, 10000]],
-        ['target_update_freq', [1, 10, 100, 1000, 10000]]
+        ['learning_freq', [1, 10, 100, 1000]],
+        ['target_update_freq', [1, 10, 100, 1000]]
     ]
+
 
     constraints = [
         lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
         ]
 
 
-    return get_arg_list(params, constraints)
+    return get_arg_list(params, constraints, FFN_ARGS)
 
 def rnn_runs(env):
     """
     Returns a list of all different rnn configurations to run 
     """
     params = [
-        ['learning_freq', [1, 10, 100, 1000, 10000]],
-        ['target_update_freq', [1, 10, 100, 1000, 10000]]
-        #['seq_len', [1, 2, 4, 8]]
+        ['learning_freq', [1, 10, 100, 1000]],
+        ['target_update_freq', [1, 10, 100, 1000]]
     ]
 
     constraints = [
@@ -74,7 +73,7 @@ def rnn_runs(env):
         ]
 
 
-    return get_arg_list(params, constraints)
+    return get_arg_list(params, constraints, RNN_ARGS)
 
 
 def tab_runs(env):
@@ -83,16 +82,6 @@ def tab_runs(env):
     """
     return [TAB_ARGS]
 
-
-def to_command(dic):
-    command = 'python3 main.py'
-    for key, value in dic.items():
-        if key == 'only_reward' or key =='save_recording' :
-            command += ' --{}'.format(key)
-        else:
-            command += ' --{} {}'.format(key, value)
-
-    return command + '\n'
 
 def get_args(): 
     """
@@ -206,7 +195,7 @@ ENV_ARGS = {
 ### Experimental Parameters ###
 np.random.seed(569)
 SEEDS = np.random.randint(0, 10000, size=1)
-MODELS = ['FFN', 'RNN', 'tabular']
+MODELS = ['FFN', 'RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
 RUNS = {

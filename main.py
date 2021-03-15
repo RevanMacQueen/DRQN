@@ -5,6 +5,7 @@ import os
 import time
 import json
 import argparse
+import copy
 
 import numpy as np
 
@@ -15,16 +16,8 @@ import matplotlib.pyplot as plt
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
 from envs.random_maze import RandomMaze
+from utils.utils import to_command
 
-def to_command(dic):
-    command = 'python3 main.py'
-    for key, value in dic.items():
-        if key == 'only_reward' or key =='save_recording' :
-            command += ' --{}'.format(key)
-        else:
-            command += ' --{} {}'.format(key, value)
-
-    return command + '\n'
 
 def get_args():
     parser = argparse.ArgumentParser(description='Parameters for RNN agent and environment')
@@ -69,7 +62,7 @@ def get_args():
 
     parser.add_argument('--only_reward', default=False, action='store_true', help = "Whether to only record rewards" )
 
-    parser.add_argument('--show_pbar', default=False, action='store_true', help = "Whether to show progress bar" )
+    parser.add_argument('--show_pbar', default=False, type=bool, help = "Whether to show progress bar" )
 
     parser.add_argument('--n', default=5, type=int, help="size of random maze")
 
@@ -116,13 +109,15 @@ def main(args):
         ob_dim = env.observation_space.shape 
         
     ac_dim = env.action_space.n 
-    args['input_dim'] = ob_dim
-    args['action_dim'] = ac_dim
+
+    agent_args = copy.deepcopy(args)
+    agent_args['input_dim'] = ob_dim
+    agent_args['action_dim'] = ac_dim
 
     if args['model_arch'] == 'tabular':
-        agent = TabularAgent(args)
+        agent = TabularAgent(agent_args)
     else:
-        agent = Agent(args)
+        agent = Agent(agent_args)
 
     step_counter = 0 # counter for length of episodes 
     episode_lengths = [] # list of episode length
@@ -144,14 +139,15 @@ def main(args):
             step_counter = 0
             obs = env.reset()
     
+    episode_lengths.append(step_counter) # for the final episode
+    
     env.close()
-
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
 
     # log experiments that finished 
-    with open('experiments_done.txt', 'w+') as output:
+    with open('experiments_done.txt', 'a') as output:
         output.write(to_command(args))
 
 if __name__ == '__main__':
