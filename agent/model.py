@@ -42,6 +42,8 @@ class QNetwork(nn.Module):
             x = l(x)
             x = F.relu(x)
 
+            print(i)
+
         action_values = self.final(x)
         
         return action_values

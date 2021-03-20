@@ -197,7 +197,7 @@ ENV_ARGS = {
 np.random.seed(569)
 SEEDS = np.random.randint(0, 10000, size=10)
 MODELS = ['FFN', 'RNN']
-ENV_IDS =['CartPole-v1'] #['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
+ENV_IDS =['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
 RUNS = {
     'FFN' : ffn_runs,
