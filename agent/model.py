@@ -69,10 +69,8 @@ class RNNQNetwork(nn.Module):
         self.hidden_state_size = hidden_state_size
         self.num_layers = num_layers
         
-
-
         self.initial = nn.Linear(self.input_size, self.hidden_state_size) #initial layer
-        self.hidden_layers = nn.ModuleList([nn.Linear(self.hidden_state_size, self.hidden_state_size) for i in range(num_layers-1)]) #hidden layers
+        self.hidden_layers = nn.ModuleList([nn.Linear(self.hidden_state_size, self.hidden_state_size) for i in range(num_layers-1)]) # additional hidden layers
 
         self.rnn = nn.RNN(self.hidden_state_size, self.hidden_state_size, batch_first=True, nonlinearity='relu')
 

@@ -143,7 +143,7 @@ FFN_ARGS = {
     'buffer_size' : 10000,
     'batch_size' : 64,
     'hidden_layer_size' : 64,
-    'num_layers' : 1,
+    'num_layers' : 2,
     'tau' : 1,
     'learning_starts': 100,
     'learning_freq' : 100,

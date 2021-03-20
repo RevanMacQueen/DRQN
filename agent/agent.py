@@ -20,8 +20,8 @@ class Agent():
 
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
         if self.agent_params['model_arch'] == 'FFN':
-            self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
-            self.qnetwork_target = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
+            self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed, num_layers=self.agent_params['num_layers']).to(device)
+            self.qnetwork_target = QNetwork(self.input_dim, self.action_dim, self.seed, num_layers=self.agent_params['num_layers']).to(device)
 
             buffer_size = self.agent_params['buffer_size']
             batch_size = self.agent_params['batch_size']
@@ -41,13 +41,15 @@ class Agent():
                 self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
-                self.seed).to(device)
+                self.seed,
+                num_layers=self.agent_params['num_layers']).to(device)
 
             self.qnetwork_target  = RNNQNetwork(
                 self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
-                self.seed).to(device)
+                self.seed,
+                num_layers=self.agent_params['num_layers']).to(device)
 
             self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
             self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
