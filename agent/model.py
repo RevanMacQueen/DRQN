@@ -119,5 +119,5 @@ class RNNQNetwork(nn.Module):
 
 
     def init_hidden(self, batch_size):
-        hidden = torch.zeros(self.num_layers, batch_size, self.hidden_state_size).to(device)
+        hidden = torch.zeros(1, batch_size, self.hidden_state_size).to(device)
         return hidden
