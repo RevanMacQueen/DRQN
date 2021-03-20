@@ -6,12 +6,14 @@ import torch.optim as optim
 
 from agent.model import QNetwork, RNNQNetwork
 from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer
+from agent.settings import device
 
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = torch.device('cpu')
+
 class Agent():  
     def __init__(self, agent_params):
         self.agent_params = agent_params
+
+        
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']

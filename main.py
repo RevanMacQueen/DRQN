@@ -6,6 +6,7 @@ import time
 import json
 import argparse
 import copy
+import torch
 
 import numpy as np
 
@@ -15,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
+from agent.settings import device
 from envs.random_maze import RandomMaze
 from utils.utils import to_command
 
@@ -72,10 +74,18 @@ def get_args():
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
 
+    parser.add_argument('--use_gpu', default=False, action='store_true', help='Whether to use GPUs for training')
+
     return vars(parser.parse_args())
 
 def main(args):
     
+    # if args['use_gpu']:
+    #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # else:
+    #     device = torch.device("cpu")
+
+
     now = datetime.now()
     timestamp = datetime.timestamp(now)
     save_dir = Path(args['save_path'])/str(timestamp)
@@ -145,6 +155,9 @@ def main(args):
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
+
+    plt.plot(episode_lengths)
+    plt.show()
 
     # log experiments that finished 
     with open('experiments_done.txt', 'a') as output:
