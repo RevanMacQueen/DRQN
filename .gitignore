@@ -134,3 +134,6 @@ mazelib/
 gym-recording
 
 results*
+
+
+*.zip
