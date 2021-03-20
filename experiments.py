@@ -110,6 +110,7 @@ def get_args():
 GENERAL_ARGS = {
     'seed' : 1,
     'save_path': 'results',
+    'run_dir': 'auto',
     'save_recording' : True,
     'only_reward' : True,
     'show_pbar' : False,
@@ -124,8 +125,8 @@ RNN_ARGS = {
     'batch_size' : 64,
     'hidden_layer_size' : 64,
     'num_layers' : 1,
-    'seq_len' : 10,
-    'tau' : 1e-3,
+    'seq_len' : 1,
+    'tau' : 1,
     'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
@@ -143,7 +144,7 @@ FFN_ARGS = {
     'batch_size' : 64,
     'hidden_layer_size' : 64,
     'num_layers' : 1,
-    'tau' : 1e-3,
+    'tau' : 1,
     'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
@@ -173,16 +174,16 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 200000,
     'gamma' : 0.99
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 100000,
     'gamma' : 0.95
 }
 
@@ -194,9 +195,9 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=1)
+SEEDS = np.random.randint(0, 10000, size=10)
 MODELS = ['FFN', 'RNN']
-ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
+ENV_IDS =['CartPole-v1'] #['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
 
 RUNS = {
     'FFN' : ffn_runs,
@@ -222,6 +223,8 @@ def experiments(script_args):
     all_args = []
     bash_file_commands = []
 
+    run_num = 0
+
     for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
@@ -232,6 +235,7 @@ def experiments(script_args):
                     general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
                     general_args['save_path'] = script_args['save_path']
                     general_args['env'] = env_id
+                    general_args['run_dir'] = str(run_num)
 
                     run_args = {**general_args, **model_args, **ENV_ARGS[env_id]}  # combine dictionaries
 
@@ -247,6 +251,8 @@ def experiments(script_args):
 
                     if script_args['num_threads'] == 1:
                         pbar.update(1)
+
+                    run_num +=1
 
     # run multithreaded experiments
     if script_args['output_type'] == 'execute' and  script_args['num_threads'] != 1:
