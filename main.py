@@ -74,21 +74,18 @@ def get_args():
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
 
-    parser.add_argument('--use_gpu', default=False, action='store_true', help='Whether to use GPUs for training')
+    parser.add_argument('--run_dir', default='auto')
 
     return vars(parser.parse_args())
 
 def main(args):
     
-    # if args['use_gpu']:
-    #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # else:
-    #     device = torch.device("cpu")
-
-
-    now = datetime.now()
-    timestamp = datetime.timestamp(now)
-    save_dir = Path(args['save_path'])/str(timestamp)
+    if args['run_dir'] == 'auto':
+        now = datetime.now()
+        timestamp = datetime.timestamp(now)
+        save_dir = Path(args['save_path'])/ str(timestamp)
+    else:
+        save_dir = Path(args['save_path'])/  args['run_dir']
     
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

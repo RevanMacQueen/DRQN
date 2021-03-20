@@ -3,9 +3,11 @@ from pathlib import Path
 from utils.utils import to_command
 import json
 
-root = Path('results')
+root = Path('results_tau_1')
 
 failed = []
+
+total =0
 
 for dir in root.iterdir():    
 
@@ -21,10 +23,13 @@ for dir in root.iterdir():
         params = json.load(open(params_file))
 
         failed.append(to_command(params))
+    total += 1
 
 with open("failed_experiments.txt", 'w+') as f:
     for l in failed:
         f.write(l)
 
 
+print(total- len(failed))
+print(total)
         
