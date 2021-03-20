@@ -134,6 +134,7 @@ mazelib/
 gym-recording
 
 results*
+experiments/
 
 
 *.zip

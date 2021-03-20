@@ -8,13 +8,12 @@ Created on Sat Feb  6 13:20:34 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-device = torch.device('cpu')
+from agent.settings import device
 
 class QNetwork(nn.Module):
     """Actor (Policy) Model."""
 
-    def __init__(self, state_size, action_size, seed, hidden_size=64):
+    def __init__(self, state_size, action_size, seed, num_layers=1, hidden_size=64):
         """Initialize parameters and build model.
         Params
         ======
@@ -28,18 +27,22 @@ class QNetwork(nn.Module):
         self.action_size = action_size
         self.hidden_size = hidden_size
         
-        self.fc1 = nn.Linear(self.state_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, action_size)
+        self.input_layer = nn.Linear(self.state_size, hidden_size)
+        self.hidden_layers = nn.ModuleList([nn.Linear(self.hidden_size, self.hidden_size) for i in range(num_layers-1)]) # (additional) hidden layers
+        self.final = nn.Linear(self.hidden_size, self.action_size) #final layer
+
         
 
     def forward(self, state):
         """Build a network that maps state -> action values."""
-        x = self.fc1(state)
+        x = self.input_layer(state)
         x = F.relu(x)
-        x = self.fc2(x)
-        x = F.relu(x)
-        action_values = self.fc3(x)
+
+        for i,l in enumerate(self.hidden_layers):
+            x = l(x)
+            x = F.relu(x)
+
+        action_values = self.final(x)
         
         return action_values
 
@@ -63,8 +66,15 @@ class RNNQNetwork(nn.Module):
         # self.hidden_layer_size = hidden_layer_size
         self.hidden_state_size = hidden_state_size
         self.num_layers = num_layers
-        self.rnn = nn.RNN(self.input_size, self.hidden_state_size, batch_first=True)
-        self.fc = nn.Linear(self.hidden_state_size, self.action_size)
+        
+
+
+        self.initial = nn.Linear(self.input_size, self.hidden_state_size) #initial layer
+        self.hidden_layers = nn.ModuleList([nn.Linear(self.hidden_state_size, self.hidden_state_size) for i in range(num_layers-1)]) #hidden layers
+
+        self.rnn = nn.RNN(self.hidden_state_size, self.hidden_state_size, batch_first=True, nonlinearity='relu')
+
+        self.final = nn.Linear(self.hidden_state_size, self.action_size) #final layer
 
         self.hidden = self.init_hidden(1) # hidden state for prediction, not learning
 
@@ -79,21 +89,32 @@ class RNNQNetwork(nn.Module):
         
         if len(x.shape) < 3:
             x = x.unsqueeze(0)
-        # hidden = self.init_hidden(batch_size)
+
+        x = self.initial(x)
+        x = F.relu(x)
+        for i, l in enumerate(self.hidden_layers):
+            x = l(x)
+            x = F.relu(x)
 
         out, hidden = self.rnn(x)
-        #out = out.view(-1, self.hidden_state_size) # idk what this line does 
-        action_values = self.fc(out)
+        action_values = self.final(out)
+
         return action_values
 
     def forward_prediction(self, x):
          
         if len(x.shape) < 3:
             x = x.unsqueeze(0)
-        out, self.hidden = self.rnn(x, self.hidden)
-        #out = out.view(-1, self.hidden_state_size)
         
-        action_values = self.fc(out)
+        x = self.initial(x)
+        x = F.relu(x)
+        for i, l in enumerate(self.hidden_layers):
+            x = l(x)
+            x = F.relu(x)
+
+        out, self.hidden = self.rnn(x, self.hidden)
+    
+        action_values = self.final(out)
         return action_values
 
 

@@ -124,7 +124,7 @@ RNN_ARGS = {
     'buffer_size' : 10000,
     'batch_size' : 64,
     'hidden_layer_size' : 64,
-    'num_layers' : 1,
+    'num_layers' : 0,
     'seq_len' : 1,
     'tau' : 1,
     'learning_starts': 100,

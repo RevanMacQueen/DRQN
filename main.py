@@ -6,6 +6,7 @@ import time
 import json
 import argparse
 import copy
+import torch
 
 import numpy as np
 
@@ -15,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
+from agent.settings import device
 from envs.random_maze import RandomMaze
 from utils.utils import to_command
 
@@ -150,6 +152,9 @@ def main(args):
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
+
+    plt.plot(episode_lengths)
+    plt.show()
 
     # log experiments that finished 
     with open('experiments_done.txt', 'a') as output:
