@@ -25,8 +25,8 @@ from utils.data_extractors import *
 
 
 
-root = Path('results_cartpole_200k_seq_len1')
-params, episode_len = extract_epsisode_lengths(root, ['model_arch', 'env', 'seed', 'learning_freq', 'target_update_freq'])
+root = Path('results_same_layers')
+params, episode_len = extract_epsisode_lengths(root, ['model_arch', 'env', 'seed', 'learning_freq', 'target_update_freq', 'seq_len'])
 
 
 env_rename = {
@@ -34,12 +34,15 @@ env_rename = {
     'envs:random_maze-v0' : 'maze',
     'MountainCar-v0' : 'mountaincar'
                 }
-for env in ['CartPole-v1']: #['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0']:
-    inds = np.where( params[:, 1]==env)
+print(params)
+
+for env in ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0']:
+    inds = np.where((params[:, 1]==env) ) # right env and seq_len 
     params_ = params[inds]
+
     episode_len_ = episode_len[inds]
 
-    plot_avg_episode_length(params_, episode_len_, categories=[3, 4], shapes=0, tick_fmt='%s. %s', xlabel='learning freq., target update freq', ylabel='avg. episode length', title=env_rename[env])
+    plot_avg_episode_length(params_, episode_len_, categories=[3, 4], shapes=[0,5], tick_fmt='%s, %s', shape_fmt = '%s, %s', xlabel='learning freq., target update freq, seq_len', ylabel='avg. episode length', title=env_rename[env])
 
-    plt.savefig("figures/episode_len_%s_tau_1_seq_1.pdf" % env_rename[env], bbox_inches='tight')
+    plt.savefig("figures/episode_len_%s_same_layer_seq_1.pdf" % env_rename[env], bbox_inches='tight')
     plt.clf()

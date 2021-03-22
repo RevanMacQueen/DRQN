@@ -143,3 +143,20 @@ class RandomMaze(Env):
 
         plt.xticks([]), plt.yticks([])
         plt.show()
+
+
+    def savePDF(self):
+        """Generate a simple image of the maze."""
+
+        grid = np.copy(self.grid) 
+
+        plt.figure(figsize=(10, 5))
+
+        grid[self.start[0], self.start[1]] = 2
+        grid[self.end[0], self.end[1]] = 3
+        grid[self.loc[0], self.loc[1]] = 4
+
+        plt.imshow(grid, interpolation='nearest')
+
+        plt.xticks([]), plt.yticks([])
+        plt.savefig('figures/maze.pdf', bbox_inches='tight')

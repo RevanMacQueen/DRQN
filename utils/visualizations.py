@@ -102,7 +102,7 @@ def plot_episode_len(params: np.array, data: np.array, row=None, col=None, plot=
     fig.tight_layout()
 
 
-def plot_avg_episode_length(params: np.array, data: np.array, categories=[], shapes=None,  plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, tick_fmt=''):
+def plot_avg_episode_length(params: np.array, data: np.array, categories=[], shapes=[],  plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, tick_fmt='', shape_fmt=''):
 
     """
     General-use function for plotting a episode length
@@ -116,14 +116,15 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
 
 
     param_categories = np.unique(params[:, categories], axis=0)
-    shape_categories = np.unique(params[:, shapes])
+
+    shape_categories = np.unique(params[:, shapes], axis=0)
     bar_width = (1 / len(shape_categories))*0.9
 
     colours = sns.cubehelix_palette(len(shape_categories), start=.5, rot=-.75).as_hex()
     colour_dict = {}
 
     for i in range(len(shape_categories)):
-        colour_dict[shape_categories[i]] = colours[i]
+        colour_dict[ shape_fmt % tuple(shape_categories[i, :])     ] = colours[i]
 
     x_pos = 0 # center for a collection of bars
 
@@ -136,15 +137,17 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
         for i in range(len(shape_categories)):
             bar_pos = bar_positions[i]
             shape_cat = shape_categories[i]
-            inds = np.where((params[:, categories]==param_cat).all(axis=1) & (params[:, shapes]==shape_cat))
-    
+            inds = np.where((params[:, categories]==param_cat).all(axis=1) & (params[:, shapes]==shape_cat).all(axis=1)    )
 
+            if inds[0].shape[0] ==0:
+                break
+
+            
             data_ =   np.concatenate(   [data[i][-50:-1] for i in inds[0] ],  axis=None)
           
-            
-            #data_ = np.hstack(data_pruned)
+            #data_ = np.hstack(data[inds])
            
-            plt.bar(bar_pos, np.mean(data_), align='edge', width = bar_width, color=colour_dict[shape_cat])
+            plt.bar(bar_pos, np.mean(data_), align='edge', width = bar_width, color=colour_dict[shape_fmt % tuple(shape_cat)])
             plt.errorbar(bar_pos+(bar_width/2), np.mean(data_),yerr=sem(data_), ecolor='black', capsize=3 )
         labels.append(tick_fmt % tuple(param_cat))
 
@@ -154,6 +157,6 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
     plt.ylabel(ylabel)
     plt.title(title)
 
-    plt.legend(handles=     [mpatches.Patch(color=colour_dict[cat], label=cat) for cat in shape_categories])
+    plt.legend(handles=[mpatches.Patch(color=v, label=k) for (k, v) in colour_dict.items()])
     plt.xticks(np.arange(len(param_categories)), labels=labels, rotation=290)
     plt.tight_layout()
