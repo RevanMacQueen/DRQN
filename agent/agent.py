@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from agent.model import QNetwork, RNNQNetwork
-from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer
+from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer, FixedLengthRNNReplayBuffer
 from agent.settings import device
 
 
@@ -51,7 +51,7 @@ class Agent():
                 self.seed,
                 num_layers=self.agent_params['num_layers']).to(device)
 
-            self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
+            self.buffer = FixedLengthRNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
             self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
             self.act = self.act_RNN
             self.learn = self.learnRNN

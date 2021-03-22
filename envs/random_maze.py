@@ -64,11 +64,17 @@ class RandomMaze(Env):
         else:
             raise NotImplementedError # add other ways to represent state here
 
+        self.episode_length = 0 # 
+        self.MAX_LENGTH = 1000
+
+
     def reset(self):
         self.loc = self.start
+        self.episode_length = 0
         return  self.gen_state(self.loc)
     
     def step(self, action):
+        self.episode_length += 1
         row,col = self.loc # row major format
         
         if action == self.UP:
@@ -91,6 +97,10 @@ class RandomMaze(Env):
             is_done = False
 
         self.loc = [row, col]
+
+        if self.episode_length >= self.MAX_LENGTH:
+            is_done = True 
+
 
         return self.gen_state(self.loc), reward, is_done, None
 
