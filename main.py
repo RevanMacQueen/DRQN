@@ -71,10 +71,14 @@ def get_args():
     parser.add_argument('--cycles', default=3, type=int, help="number of cycles in random maze")
 
     parser.add_argument('--num_iterations', default=10**6, type=int)
+      
+    parser.add_argument('--iterate', default='steps', type=str, help= "Whether max number of iterations is determined by episodes or timesteps")
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
 
     parser.add_argument('--run_dir', default='auto')
+
+    
 
     return vars(parser.parse_args())
 
@@ -132,9 +136,16 @@ def main(args):
     obs = env.reset()
 
 
-    itr = tqdm(range(args['num_iterations'])) if args['show_pbar'] else range(args['num_iterations'])
+    num_iterations = args['num_iterations']
 
-    for i in itr:
+    if args['show_pbar']:
+        pbar = tqdm(total=num_iterations)
+    
+
+    itr = 0
+    episode = 0
+    terminate = False
+    while not terminate :
         action = agent.act(obs)
         next_obs, reward, done, _ = env.step(action)
         agent.train_step(obs, action, reward, next_obs, done)
@@ -143,11 +154,25 @@ def main(args):
         step_counter += 1
         if done: # end of episode
             episode_lengths.append(step_counter)
+            episode += 1 
             step_counter = 0
             obs = env.reset()
+            if args['iterate'] == 'episodes':
+                if episode >=  num_iterations:
+                    terminate = True
+                if args['show_pbar']:
+                    pbar.update(1)
+
+        itr +=1
+        if args['iterate'] == 'steps':
+            if itr >=  num_iterations:
+                terminate = True
+            if args['show_pbar']:
+                pbar.update(1)
     
-    episode_lengths.append(step_counter) # for the final episode
-    
+    if len(episode_lengths) ==0: # incase nothing got added
+        episode_lengths.append(step_counter) 
+
     env.close()
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )

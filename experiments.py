@@ -175,16 +175,19 @@ MAZE_ARGS = {
     'cycles' : 3,
     'gamma' : 0.95,
     'num_iterations' : 100000,
+    'iterate' : 'steps'
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 200000,
-    'gamma' : 0.99
+    'num_iterations' : 1000,
+    'gamma' : 0.99,
+    'iterate' : 'episodes'
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 100000,
-    'gamma' : 0.95
+    'num_iterations' : 1000,
+    'gamma' : 1,
+    'iterate' : 'episodes'
 }
 
 ENV_ARGS = {

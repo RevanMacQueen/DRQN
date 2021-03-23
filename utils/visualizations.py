@@ -4,6 +4,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib
 from gym_recording_modified.playback import get_recordings
 import seaborn as sns
 from scipy.stats import sem
@@ -102,7 +103,7 @@ def plot_episode_len(params: np.array, data: np.array, row=None, col=None, plot=
     fig.tight_layout()
 
 
-def plot_avg_episode_length(params: np.array, data: np.array, categories=[], shapes=[],  plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, tick_fmt='', shape_fmt=''):
+def plot_avg_episode_length(params: np.array, data: np.array, categories=[], shapes=[],  plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, tick_fmt='', shape_fmt='', scale='linear'):
 
     """
     General-use function for plotting a episode length
@@ -114,9 +115,11 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
         shapes : index of parameters, will plot variables in this column with different shapes
     """
 
+    font = {'size'   : 14}
+
+    matplotlib.rc('font', **font)
 
     param_categories = np.unique(params[:, categories], axis=0)
-
     shape_categories = np.unique(params[:, shapes], axis=0)
     bar_width = (1 / len(shape_categories))*0.9
 
@@ -130,8 +133,6 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
 
     labels = []
     for param_cat in param_categories:
-
-        
         bar_positions = [(x_pos-0.5)+ (i*bar_width) for i in range(len(shape_categories))]
         
         for i in range(len(shape_categories)):
@@ -142,13 +143,12 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
             if inds[0].shape[0] ==0:
                 break
 
-            
-            data_ =   np.concatenate(   [data[i][-50:-1] for i in inds[0] ],  axis=None)
-          
-            #data_ = np.hstack(data[inds])
+            #data_ =   np.concatenate(   [data[i][-50:-1] for i in inds[0] ],  axis=None)
+            data_ = np.hstack(data[inds])
            
             plt.bar(bar_pos, np.mean(data_), align='edge', width = bar_width, color=colour_dict[shape_fmt % tuple(shape_cat)])
             plt.errorbar(bar_pos+(bar_width/2), np.mean(data_),yerr=sem(data_), ecolor='black', capsize=3 )
+        
         labels.append(tick_fmt % tuple(param_cat))
 
         x_pos += 1
@@ -157,6 +157,69 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
     plt.ylabel(ylabel)
     plt.title(title)
 
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    
+    colour_dict['FFN'] = colour_dict.pop('FFN, 10')
+
     plt.legend(handles=[mpatches.Patch(color=v, label=k) for (k, v) in colour_dict.items()])
     plt.xticks(np.arange(len(param_categories)), labels=labels, rotation=290)
+
+    if scale != 'linear':
+        plt.yscale('log', base=2)
+
+    plt.tight_layout()
+
+
+def rolling_sem(data, window):
+    sems = []
+    for i in range(0, data.shape[1]-window+1):
+        sems.append(sem( data[:, i:i+window],axis=None   )  )
+
+    sems = np.array(sems)
+    return sems
+
+
+def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, plot_fmt=''):
+    """
+ 
+    """
+    plot_params = np.unique(params[:, plot], axis=0)
+    colours = sns.cubehelix_palette(len(plot_params), start=.5, rot=-.75).as_hex()
+    colour_dict = {}
+
+    for i in range(len(plot_params)):
+        colour_dict[plot_fmt % tuple(plot_params[i, :])     ] = colours[i]
+
+    WINDOW = 1000
+
+    for plot_param in plot_params:
+        inds = np.where((params[:, plot]==plot_param).all(axis=1))
+        data_ = np.mean(data[inds], axis=0) # data to plot
+       
+
+        if WINDOW == 1:
+            error = sem(data[inds], axis=0)
+        else:
+            error = rolling_sem(data, WINDOW)
+
+        data_ = np.convolve(data_, np.ones(WINDOW)/WINDOW, mode='valid')
+        error_up = data_ + error/2
+        error_low = data_ - error/2
+
+        
+        #error_up_ = np.convolve(error_up, np.ones(WINDOW)/WINDOW, mode='valid')
+        # error_low_ = np.convolve(error_low, np.ones(WINDOW)/WINDOW, mode='valid')
+
+        plt.plot(data_, color=colour_dict[plot_fmt % tuple(plot_param)])
+        plt.fill_between(range(data_.shape[0]), error_low, error_up, color=colour_dict[plot_fmt % tuple(plot_param)], alpha=0.4)
+
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+    colour_dict['FFN'] = colour_dict.pop('FFN, 10')
+    plt.legend(handles=[mpatches.Patch(color=v, label=k) for (k, v) in colour_dict.items()])
     plt.tight_layout()
