@@ -46,10 +46,12 @@ def ffn_runs(env):
 
     # different parameters to vary, first entry is name of parameter, second is possible values
 
-    params = [
-        ['learning_freq', [1, 10, 100, 1000]],
-        ['target_update_freq', [1, 10, 100, 1000]]
-    ]
+    # params = [
+    #     ['learning_freq', [1, 10, 100, 1000]],
+    #     ['target_update_freq', [1, 10, 100, 1000]],
+    #     ['learning_rate', [5e-3, 5e-4, 5e-5]],
+    #     ['buffer_size', [1000, 10000, 100000]]
+    # ]
 
 
     constraints = [
@@ -63,9 +65,19 @@ def rnn_runs(env):
     """
     Returns a list of all different rnn configurations to run 
     """
+    # params = [
+    #     ['learning_freq', [1, 10, 100, 1000]],
+    #     ['target_update_freq', [1, 10, 100, 1000]],
+    #     ['seq_len', [1, 2, 4, 8]],
+    #     ['learning_rate', [5e-3, 5e-4, 5e-5]],
+    #     ['buffer_size', [1000, 10000, 100000]]
+    # ]
+
     params = [
-        ['learning_freq', [1, 10, 100, 1000]],
-        ['target_update_freq', [1, 10, 100, 1000]]
+        ['learning_freq', [1]],
+        ['target_update_freq', [100]],
+        ['seq_len', [1, 2, 4, 8]],
+        ['batch_size', [4, 16, 32, 64]]
     ]
 
     constraints = [
@@ -133,7 +145,7 @@ RNN_ARGS = {
     'learning_rate' : 5e-4,
     'epsilon': 1, # all methods use epsilon greedy 
     'min_epsilon' : 0.01,
-    'decay' : 0.99,
+    'decay' : 0.996,
     'state_representation' : 'one_hot'
     }
 
@@ -151,7 +163,7 @@ FFN_ARGS = {
     'learning_rate' : 5e-4,
     'epsilon': 1, # all methods use epsilon greedy
     'min_epsilon' : 0.01,
-    'decay' : 0.99,
+    'decay' : 0.996,
     'state_representation' : 'one_hot'
     }
 
@@ -174,33 +186,35 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 100000,
-    'iterate' : 'steps'
+    'num_iterations' : 200000,
+    'iterate' : 'steps',
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 200000,
     'gamma' : 0.99,
-    'iterate' : 'episodes'
+    'iterate' : 'steps',
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 1000,
+    'num_iterations' : 200000,
     'gamma' : 1,
-    'iterate' : 'episodes'
+    'iterate' : 'steps',
+
 }
 
 ENV_ARGS = {
     'envs:random_maze-v0' : MAZE_ARGS,
     'CartPole-v1' : CARTPOLE_ARGS, # no extra arguments needed
-    'MountainCar-v0' : MOUNTAINCAR_ARGS # no extra arguments needed
+    'MountainCar-v0' : MOUNTAINCAR_ARGS, # no extra arguments needed
+    'MountainCar1000-v0' : MOUNTAINCAR_ARGS # no extra arguments needed
 }
 
 ### Experimental Parameters ###
 np.random.seed(569)
 SEEDS = np.random.randint(0, 10000, size=10)
-MODELS = ['FFN', 'RNN']
-ENV_IDS =['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
+MODELS = ['RNN']
+ENV_IDS = ['CartPole-v1'] #['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0', 'MountainCar1000-v0'] 
 
 RUNS = {
     'FFN' : ffn_runs,

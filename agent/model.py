@@ -41,9 +41,6 @@ class QNetwork(nn.Module):
         for i,l in enumerate(self.hidden_layers):
             x = l(x)
             x = F.relu(x)
-
-            print(i)
-
         action_values = self.final(x)
         
         return action_values

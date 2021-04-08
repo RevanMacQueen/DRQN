@@ -140,14 +140,13 @@ def main(args):
 
     if args['show_pbar']:
         pbar = tqdm(total=num_iterations)
-    
 
     itr = 0
     episode = 0
     terminate = False
     while not terminate :
         action = agent.act(obs)
-        next_obs, reward, done, _ = env.step(action)
+        next_obs, reward, done, _ = env.step(1)
         agent.train_step(obs, action, reward, next_obs, done)
         obs = next_obs
 
@@ -169,7 +168,7 @@ def main(args):
                 terminate = True
             if args['show_pbar']:
                 pbar.update(1)
-    
+
     if len(episode_lengths) ==0: # incase nothing got added
         episode_lengths.append(step_counter) 
 

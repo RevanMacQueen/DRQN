@@ -160,9 +160,8 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
     plt.gca().spines['top'].set_visible(False)
     plt.gca().spines['right'].set_visible(False)
     
-    colour_dict['FFN'] = colour_dict.pop('FFN, 10')
-
-    plt.legend(handles=[mpatches.Patch(color=v, label=k) for (k, v) in colour_dict.items()])
+    colour_dict['DQN'] = colour_dict.pop('FFN, 10')
+    plt.legend(handles=[mpatches.Patch(color=v, label=k.replace('RNN', 'DRQN')) for (k, v) in colour_dict.items()])
     plt.xticks(np.arange(len(param_categories)), labels=labels, rotation=290)
 
     if scale != 'linear':
@@ -171,7 +170,7 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
     plt.tight_layout()
 
 
-def rolling_sem(data, window):
+def rolling_sem(data,window):
     sems = []
     for i in range(0, data.shape[1]-window+1):
         sems.append(sem( data[:, i:i+window],axis=None   )  )
@@ -180,7 +179,7 @@ def rolling_sem(data, window):
     return sems
 
 
-def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, plot_fmt=''):
+def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None, xlabel='', ylabel='', title='', rowdict={}, coldict={}, plot_fmt='',window=1, sample=1):
     """
  
     """
@@ -191,26 +190,29 @@ def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None
     for i in range(len(plot_params)):
         colour_dict[plot_fmt % tuple(plot_params[i, :])     ] = colours[i]
 
-    WINDOW = 1000
 
     for plot_param in plot_params:
         inds = np.where((params[:, plot]==plot_param).all(axis=1))
         data_ = np.mean(data[inds], axis=0) # data to plot
        
 
-        if WINDOW == 1:
-            error = sem(data[inds], axis=0)
-        else:
-            error = rolling_sem(data, WINDOW)
+        # if window == 1:
+        #     error = sem(data[inds], axis=0)
+        # else:
+        #     error = rolling_sem(data,window)
+        error = sem(data[inds], axis=0)
+        data_ = np.convolve(data_, np.ones(window)/window, mode='same')
 
-        data_ = np.convolve(data_, np.ones(WINDOW)/WINDOW, mode='valid')
+
+
+
         error_up = data_ + error/2
         error_low = data_ - error/2
 
-        
-        #error_up_ = np.convolve(error_up, np.ones(WINDOW)/WINDOW, mode='valid')
-        # error_low_ = np.convolve(error_low, np.ones(WINDOW)/WINDOW, mode='valid')
 
+        data_ = data_[0::sample]
+        error_up =  error_up[0::sample]
+        error_low =  error_low[0::sample]
         plt.plot(data_, color=colour_dict[plot_fmt % tuple(plot_param)])
         plt.fill_between(range(data_.shape[0]), error_low, error_up, color=colour_dict[plot_fmt % tuple(plot_param)], alpha=0.4)
 
@@ -220,6 +222,6 @@ def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None
     plt.ylabel(ylabel)
     plt.title(title)
 
-    colour_dict['FFN'] = colour_dict.pop('FFN, 10')
-    plt.legend(handles=[mpatches.Patch(color=v, label=k) for (k, v) in colour_dict.items()])
+    colour_dict['DQN'] = colour_dict.pop('FFN, 10')
+    plt.legend(handles=[mpatches.Patch(color=v, label=k.replace('RNN,', 'DRQN, L=')) for (k, v) in colour_dict.items()])
     plt.tight_layout()

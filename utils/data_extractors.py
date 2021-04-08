@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gym_recording_modified.playback import get_recordings
 
-def extract_epsisode_lengths(root: str, param_names: list,):
+def extract_epsisode_lengths(root: str, param_names: list, filters=None):
     """
     Extract epsiode lengths
 
@@ -21,14 +21,22 @@ def extract_epsisode_lengths(root: str, param_names: list,):
     for dir in root.iterdir():    
         params_file = dir/'params.json'               
         params = json.load(open(params_file))
-
         params_run  = [] # relevant parameters for a single run
+
+        filter = False
         for p in param_names:
             params_run.append(params.get(p, None))
-
-        all_params.append(params_run)
-        episode_len= np.load(dir/"episode_lengths.npy")
-        all_episodes.append(episode_len)
+            value = params.get(p, None)
+            
+            
+            if filters is not None:
+                allowed_values = filters.get(p)
+                if allowed_values is not None and value not in allowed_values:
+                    filter = True
+        if filter == False:
+            all_params.append(params_run)
+            episode_len= np.load(dir/"episode_lengths.npy")
+            all_episodes.append(episode_len)
 
         
     
@@ -55,9 +63,10 @@ def extract_rewards(root: str, param_names: list, filters=None):
         for p in param_names:
             params_run.append(params.get(p, None))
             value = params.get(p, None)
-            allowed_values = filters.get(p)
             
-            if filter is not None:
+            
+            if filters is not None:
+                allowed_values = filters.get(p)
                 if allowed_values is not None and value not in allowed_values:
                     filter = True
 
@@ -90,9 +99,10 @@ def extract_times(root: str, param_names: list, filters=None):
         for p in param_names:
             params_run.append(params.get(p, None))
             value = params.get(p, None)
-            allowed_values = filters.get(p)
             
-            if filter is not None:
+            
+            if filters is not None:
+                allowed_values = filters.get(p)
                 if allowed_values is not None and value not in allowed_values:
                     filter = True
 
