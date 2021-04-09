@@ -190,9 +190,6 @@ def main(args):
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
 
-    plt.plot(episode_lengths)
-    plt.show()
-
     # log experiments that finished 
     with open('experiments_done.txt', 'a') as output:
         output.write(to_command(args))
