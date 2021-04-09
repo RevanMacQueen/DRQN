@@ -17,7 +17,7 @@ def plot_timesteps(params: np.array, data: np.array, row=None, col=None, plot=No
         params : np.array shape (num_runs, num_params) with parameters for each run
         data : np.array shape (num_runs, num_timesteps) with data
         row : index of parameters, this function will generate a subplot for each unique setting
-        col : index of parameters, this function Will generate a subplot for each unique setting
+        col : index of parameters, this function will generate a subplot for each unique setting
         plot : index of parameters, for which a new line will be added to a subplot for each unique value
         
     """
@@ -45,7 +45,7 @@ def plot_timesteps(params: np.array, data: np.array, row=None, col=None, plot=No
                 ax.set_title('%s, %s' % (rowdict.get(row_param, row_param), coldict.get(col_param, col_param)))
                 ax.set_xlabel(xlabel)
                 ax.set_ylabel(ylabel)
-                ax.yscale('log')
+               
             
             col_idx += 1
         row_idx += 1
@@ -160,7 +160,10 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
     plt.gca().spines['top'].set_visible(False)
     plt.gca().spines['right'].set_visible(False)
     
-    colour_dict['DQN'] = colour_dict.pop('FFN, 10')
+
+    if 'DQN' in colour_dict.keys():
+        colour_dict['DQN'] = colour_dict.pop('FFN, 10')
+        
     plt.legend(handles=[mpatches.Patch(color=v, label=k.replace('RNN', 'DRQN')) for (k, v) in colour_dict.items()])
     plt.xticks(np.arange(len(param_categories)), labels=labels, rotation=290)
 
@@ -202,13 +205,8 @@ def plot_rewards(params: np.array, data: np.array, row=None, col=None, plot=None
         #     error = rolling_sem(data,window)
         error = sem(data[inds], axis=0)
         data_ = np.convolve(data_, np.ones(window)/window, mode='same')
-
-
-
-
         error_up = data_ + error/2
         error_low = data_ - error/2
-
 
         data_ = data_[0::sample]
         error_up =  error_up[0::sample]

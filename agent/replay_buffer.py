@@ -182,12 +182,16 @@ class FixedLengthRNNReplayBuffer:
         self.sizes[-1] += 1
 
         if done: # new episode
-            self.memory.append([])
-            self.sizes.append(0)
+            self.end_episode()
 
-        while sum(self.sizes) >=  self.buffer_size: # if over capacity, remove elements until under capacitya
+        # if over capacity, remove elements until under capacity
+        while sum(self.sizes) >=  self.buffer_size: 
             self.memory.pop(0)
             self.sizes.pop(0)
+
+    def end_episode(self):
+        self.memory.append([])
+        self.sizes.append(0)
 
     def can_sample(self):
         """Determines if a valid batch can be produced from the current buffer. 

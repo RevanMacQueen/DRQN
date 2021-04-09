@@ -135,6 +135,13 @@ def main(args):
     start_time = time.time()
     obs = env.reset()
 
+    #rewards for different environments if they have not reached the goal
+    cutoff_rewards = {
+        'envs:random_maze-v0' : 0,
+        'MountainCar-v0' : -1, 
+        'MountainCar1000-v0' : -1 
+    }
+
 
     num_iterations = args['num_iterations']
 
@@ -146,8 +153,14 @@ def main(args):
     terminate = False
     while not terminate :
         action = agent.act(obs)
-        next_obs, reward, done, _ = env.step(1)
-        agent.train_step(obs, action, reward, next_obs, done)
+        next_obs, reward, done, _ = env.step(action)
+
+        cutoff = False
+        if args['env'] in cutoff_rewards.keys(): #if we are considering cutoffs for this env
+            if (done == True) and (reward == cutoff_rewards[args['env']]): # cutoff if done is true but reward is not for the end of episode
+                cutoff = True
+
+        agent.train_step(obs, action, reward, next_obs, done, cutoff=cutoff)
         obs = next_obs
 
         step_counter += 1
