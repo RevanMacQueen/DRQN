@@ -68,13 +68,14 @@ class RNNQNetwork(nn.Module):
         
         self.initial = nn.Linear(self.input_size, self.hidden_state_size) #initial layer
         self.hidden_layers = nn.ModuleList([nn.Linear(self.hidden_state_size, self.hidden_state_size) for i in range(num_layers-1)]) # additional hidden layers
-
-        self.rnn = nn.RNN(self.hidden_state_size, self.hidden_state_size, batch_first=True, nonlinearity='relu')
+        
+        
+        self.rnn = nn.LSTM(self.hidden_state_size, self.hidden_state_size, batch_first=True)
 
         self.final = nn.Linear(self.hidden_state_size, self.action_size) #final layer
 
         self.hidden = self.init_hidden(1) # hidden state for prediction, not learning
-
+        self.mem = self.init_hidden(1) # memory cells for prediction, not learning
 
     def forward(self, x):
         """
@@ -109,7 +110,7 @@ class RNNQNetwork(nn.Module):
             x = l(x)
             x = F.relu(x)
 
-        out, self.hidden = self.rnn(x, self.hidden)
+        out, (self.hidden, self.mem) = self.rnn(x, (self.hidden,self.mem))
     
         action_values = self.final(out)
         return action_values
