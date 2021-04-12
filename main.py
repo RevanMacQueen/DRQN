@@ -6,6 +6,7 @@ import time
 import json
 import argparse
 import copy
+import torch
 
 import numpy as np
 
@@ -15,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from agent.agent import Agent
 from agent.tabular_agent import TabularAgent
+from agent.settings import device
 from envs.random_maze import RandomMaze
 from utils.utils import to_command
 
@@ -69,16 +71,25 @@ def get_args():
     parser.add_argument('--cycles', default=3, type=int, help="number of cycles in random maze")
 
     parser.add_argument('--num_iterations', default=10**6, type=int)
+      
+    parser.add_argument('--iterate', default='steps', type=str, help= "Whether max number of iterations is determined by episodes or timesteps")
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
+
+    parser.add_argument('--run_dir', default='auto')
+
+    
 
     return vars(parser.parse_args())
 
 def main(args):
     
-    now = datetime.now()
-    timestamp = datetime.timestamp(now)
-    save_dir = Path(args['save_path'])/str(timestamp)
+    if args['run_dir'] == 'auto':
+        now = datetime.now()
+        timestamp = datetime.timestamp(now)
+        save_dir = Path(args['save_path'])/ str(timestamp)
+    else:
+        save_dir = Path(args['save_path'])/  args['run_dir']
     
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -124,23 +135,56 @@ def main(args):
     start_time = time.time()
     obs = env.reset()
 
+    #rewards for different environments if they have not reached the goal
+    cutoff_rewards = {
+        'envs:random_maze-v0' : 0,
+        'MountainCar-v0' : -1, 
+        'MountainCar1000-v0' : -1 
+    }
 
-    itr = tqdm(range(args['num_iterations'])) if args['show_pbar'] else range(args['num_iterations'])
 
-    for i in itr:
+    num_iterations = args['num_iterations']
+
+    if args['show_pbar']:
+        pbar = tqdm(total=num_iterations)
+
+    itr = 0
+    episode = 0
+    terminate = False
+    while not terminate :
         action = agent.act(obs)
         next_obs, reward, done, _ = env.step(action)
-        agent.train_step(obs, action, reward, next_obs, done)
+
+        cutoff = False
+        if args['env'] in cutoff_rewards.keys(): #if we are considering cutoffs for this env
+            if (done == True) and (reward == cutoff_rewards[args['env']]): # cutoff if done is true but reward is not for the end of episode
+                cutoff = True
+
+        agent.train_step(obs, action, reward, next_obs, done, cutoff=cutoff)
         obs = next_obs
 
         step_counter += 1
         if done: # end of episode
             episode_lengths.append(step_counter)
+            episode += 1 
             step_counter = 0
             obs = env.reset()
-    
-    episode_lengths.append(step_counter) # for the final episode
-    
+            if args['iterate'] == 'episodes':
+                if episode >=  num_iterations:
+                    terminate = True
+                if args['show_pbar']:
+                    pbar.update(1)
+
+        itr +=1
+        if args['iterate'] == 'steps':
+            if itr >=  num_iterations:
+                terminate = True
+            if args['show_pbar']:
+                pbar.update(1)
+
+    if len(episode_lengths) ==0: # incase nothing got added
+        episode_lengths.append(step_counter) 
+
     env.close()
     end_time = time.time()
     np.save(save_dir/'episode_lengths.npy', episode_lengths )

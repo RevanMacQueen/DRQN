@@ -50,7 +50,6 @@ class RandomMaze(Env):
         self.UP, self.RIGHT, self.DOWN, self.LEFT = 0, 1, 2, 3 # agents actions
 
         self.action_space = spaces.Discrete(4)
-        
         if state_representation == 'integer':
             self.gen_state = self.gen_integer_state
             self.observation_space = spaces.Discrete(np.prod(self.grid.shape))
@@ -64,11 +63,17 @@ class RandomMaze(Env):
         else:
             raise NotImplementedError # add other ways to represent state here
 
+        self.episode_length = 0 # 
+        self.MAX_LENGTH = 1000
+
+
     def reset(self):
         self.loc = self.start
+        self.episode_length = 0
         return  self.gen_state(self.loc)
     
     def step(self, action):
+        self.episode_length += 1
         row,col = self.loc # row major format
         
         if action == self.UP:
@@ -91,6 +96,10 @@ class RandomMaze(Env):
             is_done = False
 
         self.loc = [row, col]
+
+        if self.episode_length >= self.MAX_LENGTH:
+            is_done = True 
+
 
         return self.gen_state(self.loc), reward, is_done, None
 
@@ -143,3 +152,20 @@ class RandomMaze(Env):
 
         plt.xticks([]), plt.yticks([])
         plt.show()
+
+
+    def savePDF(self):
+        """Generate a simple image of the maze."""
+
+        grid = np.copy(self.grid) 
+
+        plt.figure(figsize=(10, 5))
+
+        grid[self.start[0], self.start[1]] = 2
+        grid[self.end[0], self.end[1]] = 3
+        grid[self.loc[0], self.loc[1]] = 4
+
+        plt.imshow(grid, interpolation='nearest')
+
+        plt.xticks([]), plt.yticks([])
+        plt.savefig('figures/maze.pdf', bbox_inches='tight')

@@ -47,8 +47,10 @@ def ffn_runs(env):
     # different parameters to vary, first entry is name of parameter, second is possible values
 
     params = [
-        ['learning_freq', [1, 10, 100, 1000]],
-        ['target_update_freq', [1, 10, 100, 1000]]
+        ['learning_freq', [1, 10, 100]],
+        ['target_update_freq', [1, 10, 100, 1000]],
+        ['learning_rate', [5e-3, 5e-4, 5e-5]],
+        ['buffer_size', [10000, 100000]]
     ]
 
 
@@ -64,9 +66,19 @@ def rnn_runs(env):
     Returns a list of all different rnn configurations to run 
     """
     params = [
-        ['learning_freq', [1, 10, 100, 1000]],
-        ['target_update_freq', [1, 10, 100, 1000]]
+        ['learning_freq', [1, 10, 100]],
+        ['target_update_freq', [1, 10, 100, 1000]],
+        ['seq_len', [1, 2, 4, 8]],
+        ['learning_rate', [5e-3, 5e-4, 5e-5]],
+        ['buffer_size', [10000, 100000]]
     ]
+
+    # params = [
+    #     ['learning_freq', [1]],
+    #     ['target_update_freq', [100]],
+    #     ['seq_len', [1, 2, 4, 8]],
+    #     ['batch_size', [4, 16, 32, 64]]
+    # ]
 
     constraints = [
         lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
@@ -110,6 +122,7 @@ def get_args():
 GENERAL_ARGS = {
     'seed' : 1,
     'save_path': 'results',
+    'run_dir': 'auto',
     'save_recording' : True,
     'only_reward' : True,
     'show_pbar' : False,
@@ -123,16 +136,16 @@ RNN_ARGS = {
     'buffer_size' : 10000,
     'batch_size' : 64,
     'hidden_layer_size' : 64,
-    'num_layers' : 1,
-    'seq_len' : 10,
-    'tau' : 1e-3,
+    'num_layers' : 0,
+    'seq_len' : 1,
+    'tau' : 1,
     'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
     'learning_rate' : 5e-4,
     'epsilon': 1, # all methods use epsilon greedy 
     'min_epsilon' : 0.01,
-    'decay' : 0.99,
+    'decay' : 0.995,
     'state_representation' : 'one_hot'
     }
 
@@ -142,15 +155,15 @@ FFN_ARGS = {
     'buffer_size' : 10000,
     'batch_size' : 64,
     'hidden_layer_size' : 64,
-    'num_layers' : 1,
-    'tau' : 1e-3,
+    'num_layers' : 2,
+    'tau' : 1,
     'learning_starts': 100,
     'learning_freq' : 100,
     'target_update_freq' : 1,
     'learning_rate' : 5e-4,
     'epsilon': 1, # all methods use epsilon greedy
     'min_epsilon' : 0.01,
-    'decay' : 0.99,
+    'decay' : 0.995,
     'state_representation' : 'one_hot'
     }
 
@@ -173,30 +186,34 @@ MAZE_ARGS = {
     'n' : 5,
     'cycles' : 3,
     'gamma' : 0.95,
-    'num_iterations' : 1000,
+    'num_iterations' : 200000,
+    'iterate' : 'steps',
     }
 
 CARTPOLE_ARGS = {
-    'num_iterations' : 1000,
-    'gamma' : 0.99
+    'num_iterations' : 200000,
+    'gamma' : 0.99,
+    'iterate' : 'steps',
 }
 
 MOUNTAINCAR_ARGS = {
-    'num_iterations' : 1000,
-    'gamma' : 0.95
+    'num_iterations' : 200000,
+    'gamma' : 1,
+    'iterate' : 'steps',
 }
 
 ENV_ARGS = {
     'envs:random_maze-v0' : MAZE_ARGS,
     'CartPole-v1' : CARTPOLE_ARGS, # no extra arguments needed
-    'MountainCar-v0' : MOUNTAINCAR_ARGS # no extra arguments needed
+    'MountainCar-v0' : MOUNTAINCAR_ARGS, # no extra arguments needed
+    'MountainCar1000-v0' : MOUNTAINCAR_ARGS # no extra arguments needed
 }
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=1)
+SEEDS = np.random.randint(0, 10000, size=10)
 MODELS = ['FFN', 'RNN']
-ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0'] 
+ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0', 'MountainCar1000-v0'] 
 
 RUNS = {
     'FFN' : ffn_runs,
@@ -204,7 +221,6 @@ RUNS = {
     'tabular' : tab_runs
 }
 ###############################
-
 
 def experiments(script_args):
     # Count number of runs
@@ -222,6 +238,8 @@ def experiments(script_args):
     all_args = []
     bash_file_commands = []
 
+    run_num = 0
+
     for env_id in ENV_IDS:
         for model in MODELS:
            for seed in SEEDS:
@@ -232,6 +250,7 @@ def experiments(script_args):
                     general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
                     general_args['save_path'] = script_args['save_path']
                     general_args['env'] = env_id
+                    general_args['run_dir'] = str(run_num)
 
                     run_args = {**general_args, **model_args, **ENV_ARGS[env_id]}  # combine dictionaries
 
@@ -247,6 +266,8 @@ def experiments(script_args):
 
                     if script_args['num_threads'] == 1:
                         pbar.update(1)
+
+                    run_num +=1
 
     # run multithreaded experiments
     if script_args['output_type'] == 'execute' and  script_args['num_threads'] != 1:

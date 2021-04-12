@@ -5,24 +5,23 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from agent.model import QNetwork, RNNQNetwork
-from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer
+from agent.replay_buffer import ReplayBuffer, RNNReplayBuffer, FixedLengthRNNReplayBuffer
+from agent.settings import device
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent():  
     def __init__(self, agent_params):
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.agent_params = agent_params
+
+        
 
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
-        
 
-        
         self.seed = self.agent_params.get('seed', np.random.randint(0,10000))
         if self.agent_params['model_arch'] == 'FFN':
-            self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
-            self.qnetwork_target = QNetwork(self.input_dim, self.action_dim, self.seed).to(device)
+            self.qnetwork_local = QNetwork(self.input_dim, self.action_dim, self.seed, num_layers=self.agent_params['num_layers']).to(device)
+            self.qnetwork_target = QNetwork(self.input_dim, self.action_dim, self.seed, num_layers=self.agent_params['num_layers']).to(device)
 
             buffer_size = self.agent_params['buffer_size']
             batch_size = self.agent_params['batch_size']
@@ -42,15 +41,17 @@ class Agent():
                 self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
-                self.seed).to(device)
+                self.seed,
+                num_layers=self.agent_params['num_layers']).to(device)
 
             self.qnetwork_target  = RNNQNetwork(
                 self.input_dim, 
                 self.action_dim, 
                 self.hidden_layer_size, 
-                self.seed).to(device)
+                self.seed,
+                num_layers=self.agent_params['num_layers']).to(device)
 
-            self.buffer = RNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
+            self.buffer = FixedLengthRNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
             self.prev_obs = np.zeros((seq_len, self.input_dim)) # a "buffer" of the previous number of sequences 
             self.act = self.act_RNN
             self.learn = self.learnRNN
@@ -74,6 +75,7 @@ class Agent():
         Returns an action given observation obs using a FFN
         """
         obs = torch.from_numpy(obs).float().unsqueeze(0).to(device)
+
         self.qnetwork_local.eval()
         with torch.no_grad():
             action_values = self.qnetwork_local(obs)
@@ -109,11 +111,17 @@ class Agent():
         return action    
 
 
-    def train_step(self, obs, action, reward, next_obs, done, add_new_episode=False):
+    def train_step(self, obs, action, reward, next_obs, done, add_new_episode=False, cutoff=False):
         """
         Handles agent training. Adds samples to replay buffer and, if appropriate, trains net
         """
-        self.buffer.add(obs, action, reward, next_obs, done)
+
+        if cutoff:
+            if self.agent_params['model_arch'] == 'RNN':
+                self.buffer.end_episode()
+        else:
+            self.buffer.add(obs, action, reward, next_obs, done)
+
 
         if done: # if end of episode, decay epsilon by a factor of 0.99
             self.eps = self.eps * self.decay
@@ -124,7 +132,6 @@ class Agent():
                 self.qnetwork_local.eval()
                 with torch.no_grad():
                     self.qnetwork_local.hidden = self.qnetwork_local.init_hidden(1) # if end of episode, refresh hidden state
-
 
         self.t_step += 1
         if self.t_step >= self.learning_starts and self.buffer.can_sample():

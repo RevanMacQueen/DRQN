@@ -133,4 +133,8 @@ mazelib/
 .vscode/
 gym-recording
 
-results/
+results*
+experiments/
+
+
+*.zip
