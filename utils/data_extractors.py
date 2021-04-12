@@ -28,17 +28,51 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None):
             params_run.append(params.get(p, None))
             value = params.get(p, None)
             
+            if filters is not None:
+                allowed_values = filters.get(p)
+                if allowed_values is not None and value not in allowed_values:
+                    filter = True
+
+        if filter == False:
+            all_params.append(params_run)
+            episode_len= np.load(dir/"episode_lengths.npy")
+            all_episodes.append(episode_len)
+    
+    return np.array(all_params),  np.array( all_episodes)
+
+
+def extract_num_episodes(root: str, param_names: list, filters=None):
+    """
+    Extract number of episodes
+
+    args
+        root : directory where results are stored
+        param_names : a list of parameters to extract for each run, stored in params.json 
+        env: which environment to extract this for
+    """
+
+    all_episodes = []
+    all_params = []
+
+    for dir in root.iterdir():    
+        params_file = dir/'params.json'               
+        params = json.load(open(params_file))
+        params_run  = [] # relevant parameters for a single run
+
+        filter = False
+        for p in param_names:
+            params_run.append(params.get(p, None))
+            value = params.get(p, None)
             
             if filters is not None:
                 allowed_values = filters.get(p)
                 if allowed_values is not None and value not in allowed_values:
                     filter = True
+
         if filter == False:
             all_params.append(params_run)
             episode_len= np.load(dir/"episode_lengths.npy")
-            all_episodes.append(episode_len)
-
-        
+            all_episodes.append(len(episode_len))
     
     return np.array(all_params),  np.array( all_episodes)
 
