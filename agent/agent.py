@@ -13,8 +13,6 @@ class Agent():
     def __init__(self, agent_params):
         self.agent_params = agent_params
 
-        
-
         self.input_dim = self.agent_params['input_dim']
         self.action_dim = self.agent_params['action_dim']
 
@@ -25,8 +23,16 @@ class Agent():
 
             buffer_size = self.agent_params['buffer_size']
             batch_size = self.agent_params['batch_size']
+            seq_len = self.agent_params['seq_len']
            
             self.buffer = ReplayBuffer(self.action_dim, buffer_size, batch_size, self.seed)
+
+            if agent_params['buffer'] == 'episodes':
+                self.buffer = FixedLengthRNNReplayBuffer(self.action_dim, buffer_size, batch_size, seq_len, self.seed)
+                self.learn = self.learnRNN
+            else:
+                self.buffer = ReplayBuffer(self.action_dim, buffer_size, batch_size, self.seed)
+            
             self.act = self.act_FFN
 
         elif self.agent_params['model_arch'] == 'RNN':
@@ -117,7 +123,7 @@ class Agent():
         """
 
         if cutoff:
-            if self.agent_params['model_arch'] == 'RNN':
+            if self.agent_params['buffer'] == 'episodes':
                 self.buffer.end_episode()
         else:
             self.buffer.add(obs, action, reward, next_obs, done)
@@ -134,6 +140,7 @@ class Agent():
                     self.qnetwork_local.hidden = self.qnetwork_local.init_hidden(1) # if end of episode, refresh hidden state
 
         self.t_step += 1
+       
         if self.t_step >= self.learning_starts and self.buffer.can_sample():
             if self.t_step % self.learning_freq == 0:
                 experiences = self.buffer.sample()

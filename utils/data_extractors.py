@@ -4,8 +4,10 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from gym_recording_modified.playback import get_recordings
+from tqdm import tqdm
 
-def extract_epsisode_lengths(root: str, param_names: list, filters=None):
+
+def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=False):
     """
     Extract epsiode lengths
 
@@ -18,7 +20,7 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None):
     all_episodes = []
     all_params = []
 
-    for dir in root.iterdir():    
+    for dir in tqdm(root.iterdir()):    
         params_file = dir/'params.json'               
         params = json.load(open(params_file))
         params_run  = [] # relevant parameters for a single run
@@ -36,10 +38,13 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None):
         if filter == False:
             all_params.append(params_run)
             episode_len= np.load(dir/"episode_lengths.npy")
-            all_episodes.append(episode_len)
+
+            if last_n:
+                all_episodes.append(episode_len[-last_n:])
+            else:
+                all_episodes.append(episode_len)
     
     return np.array(all_params),  np.array( all_episodes)
-
 
 def extract_num_episodes(root: str, param_names: list, filters=None):
     """
@@ -54,7 +59,7 @@ def extract_num_episodes(root: str, param_names: list, filters=None):
     all_episodes = []
     all_params = []
 
-    for dir in root.iterdir():    
+    for dir in tqdm(root.iterdir()):    
         params_file = dir/'params.json'               
         params = json.load(open(params_file))
         params_run  = [] # relevant parameters for a single run

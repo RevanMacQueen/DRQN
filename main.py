@@ -78,7 +78,7 @@ def get_args():
 
     parser.add_argument('--run_dir', default='auto')
 
-    
+    parser.add_argument('--buffer', default='steps')
 
     return vars(parser.parse_args())
 
