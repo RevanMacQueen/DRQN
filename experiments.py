@@ -50,7 +50,8 @@ def ffn_runs(env):
         ['learning_freq', [1, 10, 100]],
         ['target_update_freq', [1, 10, 100, 1000]],
         ['learning_rate', [5e-3, 5e-4, 5e-5]],
-        ['buffer_size', [10000, 100000]]
+        ['buffer_size', [10000, 100000]],
+        ['seq_len', [1, 2, 4, 8]]
     ]
 
 
@@ -146,7 +147,8 @@ RNN_ARGS = {
     'epsilon': 1, # all methods use epsilon greedy 
     'min_epsilon' : 0.01,
     'decay' : 0.995,
-    'state_representation' : 'one_hot'
+    'state_representation' : 'one_hot',
+    'buffer' : 'episodes'
     }
 
 # default Arguments for FFN
@@ -164,7 +166,9 @@ FFN_ARGS = {
     'epsilon': 1, # all methods use epsilon greedy
     'min_epsilon' : 0.01,
     'decay' : 0.995,
-    'state_representation' : 'one_hot'
+    'state_representation' : 'one_hot',
+    'buffer' : 'episodes',
+    'seq_len' : 1
     }
 
 # Arguments for tabular
@@ -212,8 +216,8 @@ ENV_ARGS = {
 ### Experimental Parameters ###
 np.random.seed(569)
 SEEDS = np.random.randint(0, 10000, size=10)
-MODELS = ['FFN', 'RNN']
-ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1', 'MountainCar-v0', 'MountainCar1000-v0'] 
+MODELS = ['FFN']
+ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1'] 
 
 RUNS = {
     'FFN' : ffn_runs,
