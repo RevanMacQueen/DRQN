@@ -50,8 +50,7 @@ def ffn_runs(env):
         ['learning_freq', [1, 10, 100]],
         ['target_update_freq', [1, 10, 100, 1000]],
         ['learning_rate', [5e-3, 5e-4, 5e-5]],
-        ['buffer_size', [10000, 100000]],
-        ['seq_len', [1, 2, 4, 8]]
+        ['buffer_size', [10000]]
     ]
 
 
@@ -71,15 +70,8 @@ def rnn_runs(env):
         ['target_update_freq', [1, 10, 100, 1000]],
         ['seq_len', [1, 2, 4, 8]],
         ['learning_rate', [5e-3, 5e-4, 5e-5]],
-        ['buffer_size', [10000, 100000]]
+        ['buffer_size', [10000]]
     ]
-
-    # params = [
-    #     ['learning_freq', [1]],
-    #     ['target_update_freq', [100]],
-    #     ['seq_len', [1, 2, 4, 8]],
-    #     ['batch_size', [4, 16, 32, 64]]
-    # ]
 
     constraints = [
         lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
@@ -167,7 +159,7 @@ FFN_ARGS = {
     'min_epsilon' : 0.01,
     'decay' : 0.995,
     'state_representation' : 'one_hot',
-    'buffer' : 'episodes',
+    'buffer' : 'steps',
     'seq_len' : 1
     }
 
@@ -215,8 +207,8 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=10)
-MODELS = ['FFN']
+SEEDS = np.random.randint(0, 10000, size=30)[10:]
+MODELS = ['FFN', 'RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1'] 
 
 RUNS = {
@@ -242,7 +234,7 @@ def experiments(script_args):
     all_args = []
     bash_file_commands = []
 
-    run_num = 0
+    run_num = 10800
 
     for env_id in ENV_IDS:
         for model in MODELS:

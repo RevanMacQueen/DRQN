@@ -38,15 +38,16 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=
         if filter == False:
             all_params.append(params_run)
             episode_len= np.load(dir/"episode_lengths.npy")
-
+            
             if last_n:
                 all_episodes.append(episode_len[-last_n:])
             else:
                 all_episodes.append(episode_len)
     
-    return np.array(all_params),  np.array( all_episodes)
+    return np.array(all_params), np.array( all_episodes)
 
-def extract_num_episodes(root: str, param_names: list, filters=None):
+
+def extract_num_episodes(root: str, param_names: list, filters=None, cutoffs=None):
     """
     Extract number of episodes
 
@@ -63,12 +64,13 @@ def extract_num_episodes(root: str, param_names: list, filters=None):
         params_file = dir/'params.json'               
         params = json.load(open(params_file))
         params_run  = [] # relevant parameters for a single run
+        env = params['env']
 
         filter = False
         for p in param_names:
             params_run.append(params.get(p, None))
             value = params.get(p, None)
-            
+
             if filters is not None:
                 allowed_values = filters.get(p)
                 if allowed_values is not None and value not in allowed_values:
@@ -76,8 +78,14 @@ def extract_num_episodes(root: str, param_names: list, filters=None):
 
         if filter == False:
             all_params.append(params_run)
-            episode_len= np.load(dir/"episode_lengths.npy")
-            all_episodes.append(len(episode_len))
+            episode_len = np.load(dir/"episode_lengths.npy")
+
+            if cutoffs is not None:
+                episodes_completed = np.sum(episode_len != cutoffs[env])
+            else:
+                episodes_completed  = episode_len.shape[0]
+
+            all_episodes.append(episodes_completed)
     
     return np.array(all_params),  np.array( all_episodes)
 

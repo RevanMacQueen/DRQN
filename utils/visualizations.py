@@ -143,7 +143,6 @@ def plot_avg_episode_length(params: np.array, data: np.array, categories=[], sha
             if inds[0].shape[0] ==0:
                 break
 
-            #data_ =   np.concatenate(   [data[i][-50:-1] for i in inds[0] ],  axis=None)
             data_ = np.hstack(data[inds])
            
             plt.bar(bar_pos, np.mean(data_), align='edge', width = bar_width, color=colour_dict[shape_fmt % tuple(shape_cat)])
