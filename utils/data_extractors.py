@@ -7,7 +7,7 @@ from gym_recording_modified.playback import get_recordings
 from tqdm import tqdm
 
 
-def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=False):
+def extract_episode_lengths(root: str, param_names: list, filters=None, cutoffs=None, last_n=False):
     """
     Extract epsiode lengths
 
@@ -16,6 +16,16 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=
         param_names : a list of parameters to extract for each run, stored in params.json 
         env: which environment to extract this for
     """
+    def cutoff(episode_len, cutoff):
+        new_episode_len = []
+        current_len = 0
+        for i in episode_len:
+            current_len += i
+            if i != cutoff: 
+                new_episode_len.append(current_len)
+                current_len = 0
+
+        return new_episode_len
 
     all_episodes = []
     all_params = []
@@ -24,6 +34,7 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=
         params_file = dir/'params.json'               
         params = json.load(open(params_file))
         params_run  = [] # relevant parameters for a single run
+        env = params['env']
 
         filter = False
         for p in param_names:
@@ -37,15 +48,18 @@ def extract_epsisode_lengths(root: str, param_names: list, filters=None, last_n=
 
         if filter == False:
             all_params.append(params_run)
-            episode_len= np.load(dir/"episode_lengths.npy")
-            
+            episode_len = np.load(dir/"episode_lengths.npy")
+
+            if cutoffs is not None:
+                # add cut off episodes to subsequent
+                episode_len = cutoff(episode_len, cutoffs[env])
+
             if last_n:
                 all_episodes.append(episode_len[-last_n:])
             else:
                 all_episodes.append(episode_len)
     
     return np.array(all_params), np.array( all_episodes)
-
 
 def extract_num_episodes(root: str, param_names: list, filters=None, cutoffs=None):
     """
