@@ -64,14 +64,14 @@ def get_args():
 
     parser.add_argument('--only_reward', default=False, action='store_true', help = "Whether to only record rewards" )
 
-    parser.add_argument('--show_pbar', default=False, type=bool, help = "Whether to show progress bar" )
+    parser.add_argument('--show_pbar', default=True, type=bool, help = "Whether to show progress bar" )
 
     parser.add_argument('--n', default=5, type=int, help="size of random maze")
 
     parser.add_argument('--cycles', default=3, type=int, help="number of cycles in random maze")
 
     parser.add_argument('--num_iterations', default=10**6, type=int)
-      
+    
     parser.add_argument('--iterate', default='steps', type=str, help= "Whether max number of iterations is determined by episodes or timesteps")
 
     parser.add_argument('--state_representation', default='flat_grid', type=str, help='How to represent the state')
@@ -79,6 +79,8 @@ def get_args():
     parser.add_argument('--run_dir', default='auto')
 
     parser.add_argument('--buffer', default='steps')
+    
+    parser.add_argument('--zero_state', default='False')
 
     return vars(parser.parse_args())
 
@@ -124,7 +126,8 @@ def main(args):
     agent_args = copy.deepcopy(args)
     agent_args['input_dim'] = ob_dim
     agent_args['action_dim'] = ac_dim
-
+    
+    
     if args['model_arch'] == 'tabular':
         agent = TabularAgent(agent_args)
     else:
