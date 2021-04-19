@@ -158,13 +158,17 @@ def experiments(script_args):
             general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
             general_args['save_path'] = script_args['save_path']
             general_args['env'] = i[2]
-            general_args['run_dir'] = str(run_num)
+            
 
+            for alg in ['FFN', 'RNN']:
 
-            if i[0] == 'FFN':
-                model_args = deepcopy(FFN_ARGS)
-                for seq_len in [1,2,4,8]:
+                if alg == 'FFN':
+                    model_args = deepcopy(FFN_ARGS)
+                else:
+                    model_args = deepcopy(RNN_ARGS) 
                 
+                for seq_len in [1,2,3,4]:
+                    general_args['run_dir'] = str(run_num)
                     model_args['model_arch'] = i[0]
                     model_args['seq_len'] = seq_len
                     model_args['learning_freq'] = i[3]
@@ -185,29 +189,6 @@ def experiments(script_args):
                         bash_file_commands.append(to_command(run_args))
 
                     run_num +=1
-
-            else:
-                model_args = deepcopy(RNN_ARGS) 
-                model_args['model_arch'] = i[0]
-                model_args['seq_len'] = i[1]
-                model_args['learning_freq'] = i[3]
-                model_args['target_update_freq'] = i[4]
-                model_args['learning_rate'] = i[5]
-                model_args['buffer_size'] = i[6]
-
-                run_args = {**general_args, **model_args, **ENV_ARGS[i[2]]}  # combine dictionaries
-
-                if script_args['output_type'] == 'execute':                     
-                    if script_args['num_threads'] == 1:
-                        main(run_args)
-                
-                    elif script_args['num_threads'] != 1:
-                        all_args.append(run_args)
-                
-                else: 
-                    bash_file_commands.append(to_command(run_args))
-
-                run_num +=1
 
     # run multithreaded experiments
     if script_args['output_type'] == 'execute' and  script_args['num_threads'] != 1:
