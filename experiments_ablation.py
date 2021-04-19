@@ -82,7 +82,7 @@ FFN_ARGS = {
     'min_epsilon' : 0.01,
     'decay' : 0.995,
     'state_representation' : 'one_hot',
-    'buffer' : 'episode',
+    'buffer' : 'episodes',
     'seq_len' : 1
     }
 
@@ -130,7 +130,7 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=100)
+SEEDS = np.random.randint(0, 10000, size=50)
 
 # determined though new_visualizations script
 BEST_PARAMS = [
@@ -142,8 +142,8 @@ BEST_PARAMS = [
     ('FFN', '1', 'CartPole-v1', '1', '100', '0.0005', '10000'),
     ('RNN', '1', 'CartPole-v1', '10', '100', '0.005', '10000'),
     ('RNN', '2', 'CartPole-v1', '10', '1000', '0.005', '10000'),
-    ('RNN', '4', 'CartPole-v1', '1', '100', '5e-05', '10000'),
-    ('RNN', '8', 'CartPole-v1', '10', '1000', '0.005', '10000')]
+    ('RNN', '4', 'CartPole-v1', '1', '100', '5e-05', '10000')]
+    #('RNN', '8', 'CartPole-v1', '10', '1000', '0.005', '10000')] same as above
 
 
 def experiments(script_args):
@@ -153,24 +153,24 @@ def experiments(script_args):
     bash_file_commands = []
 
     for i in BEST_PARAMS:
-        for seed in SEEDS:
-            general_args = deepcopy(GENERAL_ARGS)
-            general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
-            general_args['save_path'] = script_args['save_path']
-            general_args['env'] = i[2]
-            
-
-            for alg in ['FFN', 'RNN']:
-
-                if alg == 'FFN':
-                    model_args = deepcopy(FFN_ARGS)
-                else:
-                    model_args = deepcopy(RNN_ARGS) 
-                
-                for seq_len in [1,2,3,4]:
+        for alg in ['FFN', 'RNN']:
+            for seq_len in [1, 2, 3, 4]:
+                for seed in SEEDS:
+                    
+                    if alg == 'FFN':
+                        model_args = deepcopy(FFN_ARGS)
+                    else:
+                        model_args = deepcopy(RNN_ARGS) 
+                    
+                    general_args = deepcopy(GENERAL_ARGS)
+                    general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
+                    general_args['save_path'] = script_args['save_path']
+                    general_args['env'] = i[2]
                     general_args['run_dir'] = str(run_num)
-                    model_args['model_arch'] = i[0]
+
+                    model_args['model_arch'] = alg
                     model_args['seq_len'] = seq_len
+
                     model_args['learning_freq'] = i[3]
                     model_args['target_update_freq'] = i[4]
                     model_args['learning_rate'] = i[5]
