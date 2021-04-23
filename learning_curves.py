@@ -140,12 +140,12 @@ for env in envs:
                 bins[ind].append(ep_len)
                 sum_ += ep_len 
 
-
         mean = np.array([ np.sum(i)/len(i) for i in bins])
         sigma = np.array([np.std(i,axis=0)/np.sqrt(len(i)) for i in bins])
         t = np.linspace(0, n_bins-1, n_bins)
         plt.plot(mean)
         ax.fill_between(t, mean+sigma, mean-sigma, alpha=0.6)
+
     plt.xlabel('Run Progress %')
     plt.ylabel('Average Episode Length')
     plt.title(env)
