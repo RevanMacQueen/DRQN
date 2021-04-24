@@ -19,7 +19,7 @@ def get_args():
 
     parser.add_argument('--output_type',  default= "compute_canada_format", type=str, choices=("bash_file", "compute_canada_format", "execute"), help="What should be the output of this file: bash_file: generates a bash file of the commands that you should run in linux for all the experiments | compute_canada_format: generates a file that can be used to run all the experiments on compute canada | execute: will run all experiments on your computer")
 
-    parser.add_argument('--output_path', default='experiments', type=str,
+    parser.add_argument('--output_path', default='experiments_best', type=str,
             nargs='?', help="The path to save the output file of this script")
 
     parser.add_argument('--save_path', default='results', type=str,

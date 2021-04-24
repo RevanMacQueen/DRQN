@@ -80,7 +80,7 @@ def get_args():
 
     parser.add_argument('--buffer', default='steps')
     
-    parser.add_argument('--zero_state', default='False')
+    parser.add_argument('--zero_state', default=False, action='store_true')
 
     return vars(parser.parse_args())
 

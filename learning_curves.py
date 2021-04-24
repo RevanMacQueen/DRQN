@@ -140,6 +140,7 @@ for env in envs:
                 bins[ind].append(ep_len)
                 sum_ += ep_len 
 
+        print(np.min([len(i) for i in bins]))
         mean = np.array([ np.sum(i)/len(i) for i in bins])
         sigma = np.array([np.std(i,axis=0)/np.sqrt(len(i)) for i in bins])
         t = np.linspace(0, n_bins-1, n_bins)

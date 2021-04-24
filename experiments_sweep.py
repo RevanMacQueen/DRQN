@@ -77,7 +77,6 @@ def rnn_runs(env):
         lambda setting: setting[0] <= setting[1] # enforces that learning_freq <= target_update_freq
         ]
 
-
     return get_arg_list(params, constraints, RNN_ARGS)
 
 
@@ -207,7 +206,7 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=30)[10:]
+SEEDS = np.random.randint(0, 10000, size=1)
 MODELS = ['FFN', 'RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1'] 
 

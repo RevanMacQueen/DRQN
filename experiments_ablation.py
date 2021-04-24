@@ -173,11 +173,11 @@ SEEDS = np.random.randint(0, 10000, size=50)
 
 # determined though new_visualizations script
 BEST_PARAMS = [
-    # ('FFN', '1', 'envs:random_maze-v0', '1', '10', '5e-05', '10000'),
-    # ('RNN', '1', 'envs:random_maze-v0', '1', '1', '0.0005', '10000'),
-    # ('RNN', '2', 'envs:random_maze-v0', '1', '100', '0.0005', '10000'),
-    # ('RNN', '4', 'envs:random_maze-v0', '1', '100', '5e-05', '10000'),
-    # ('RNN', '8', 'envs:random_maze-v0', '1', '1', '5e-05', '10000'),
+    ('FFN', '1', 'envs:random_maze-v0', '1', '10', '5e-05', '10000'),
+    ('RNN', '1', 'envs:random_maze-v0', '1', '1', '0.0005', '10000'),
+    ('RNN', '2', 'envs:random_maze-v0', '1', '100', '0.0005', '10000'),
+    ('RNN', '4', 'envs:random_maze-v0', '1', '100', '5e-05', '10000'),
+    ('RNN', '8', 'envs:random_maze-v0', '1', '1', '5e-05', '10000'),
     ('FFN', '1', 'CartPole-v1', '1', '100', '0.0005', '10000'),
     ('RNN', '1', 'CartPole-v1', '10', '100', '0.005', '10000'),
     ('RNN', '2', 'CartPole-v1', '10', '1000', '0.005', '10000'),
@@ -193,12 +193,12 @@ ARG_MAP = {
 }
 
 def experiments(script_args):
-    run_num = 3600
+    run_num = 0
     all_args = []
     bash_file_commands = []
 
     for i in BEST_PARAMS:
-        for alg in ['FFN', 'RNN']:
+        for alg in ['FFN', 'RNN', 'FFN_MB', 'ZERO_RNN']:
             for seq_len in [1, 2, 4, 8]:
                 for seed in SEEDS:
                     model_args = deepcopy(ARG_MAP[alg])
