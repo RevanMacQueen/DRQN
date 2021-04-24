@@ -83,8 +83,6 @@ cutoffs = {
 params, ep_lens = extract_epsisode_lengths(root, ['model_arch', 'env', 'seed', 'learning_freq', 'target_update_freq', 'seq_len', 'learning_rate', 'buffer_size'], filters, cutoffs)
 
 
-# In[80]:
-
 
 df1 = pd.DataFrame(params)
 df2 = pd.DataFrame(ep_lens)

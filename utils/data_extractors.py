@@ -93,14 +93,10 @@ def extract_num_episodes(root: str, param_names: list, filters=None, cutoffs=Non
         if filter == False:
             all_params.append(params_run)
             episode_len = np.load(dir/"episode_lengths.npy")
-
-            print("")
-            print(len(episode_len))
             
 
             if cutoffs is not None:
                 episodes_completed = np.sum(episode_len != cutoffs[env])
-                print(episodes_completed)
             else:
                 episodes_completed  = episode_len.shape[0]
 
