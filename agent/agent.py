@@ -44,7 +44,6 @@ class Agent():
             seq_len = self.agent_params['seq_len']
             
             if self.agent_params['zero_state'] == False:
-                print("ere")
                 self.qnetwork_local  = RNNQNetwork(
                     self.input_dim, 
                     self.action_dim, 
@@ -60,7 +59,6 @@ class Agent():
                     num_layers=self.agent_params['num_layers']).to(device)
 
             else:
-                print("Zero State")
                 self.qnetwork_local  = RNNQNetworkZeroState(
                     self.input_dim, 
                     self.action_dim, 

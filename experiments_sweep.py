@@ -206,8 +206,8 @@ ENV_ARGS = {
 
 ### Experimental Parameters ###
 np.random.seed(569)
-SEEDS = np.random.randint(0, 10000, size=1)
-MODELS = ['FFN', 'RNN']
+SEEDS = np.random.randint(0, 10000, size=30)
+MODELS = ['RNN']
 ENV_IDS = ['envs:random_maze-v0', 'CartPole-v1'] 
 
 RUNS = {
@@ -233,7 +233,7 @@ def experiments(script_args):
     all_args = []
     bash_file_commands = []
 
-    run_num = 10800
+    run_num = 30000
 
     for env_id in ENV_IDS:
         for model in MODELS:
