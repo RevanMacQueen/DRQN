@@ -184,7 +184,6 @@ BEST_PARAMS = [
     ('RNN',  4, 'CartPole-v1', 10, 10, 0.0005, 10000),
     ('RNN',  8, 'CartPole-v1', 10, 1000, 0.005, 10000)]
 
-
 ARG_MAP = {
     'FFN' : FFN_ARGS,
     'RNN' : RNN_ARGS,
@@ -212,7 +211,6 @@ def experiments(script_args):
                 for seq_len in [1, 2, 4, 8]:
                     for seed in SEEDS:
                         model_args = deepcopy(ARG_MAP[alg])
-                        
                         general_args = deepcopy(GENERAL_ARGS)
                         general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
                         general_args['save_path'] = script_args['save_path']
