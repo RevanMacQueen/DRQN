@@ -173,16 +173,16 @@ SEEDS = np.random.randint(0, 10000, size=30)
 
 # determined though new_visualizations script
 BEST_PARAMS = [
-    ('FFN', '1', 'envs:random_maze-v0', '1', '100', '0.0005', '10000'),
-    ('RNN', '1', 'envs:random_maze-v0', '10', '100', '0.005', '10000'),
-    ('RNN', '2', 'envs:random_maze-v0', '1', '100', '0.0005', '10000'),
-    ('RNN', '4', 'envs:random_maze-v0', '1', '100', '5e-05', '10000'),
-    ('RNN', '8', 'envs:random_maze-v0', '1', '1', '5e-05', '10000')]
-    # ('FFN', '1', 'CartPole-v1', '1', '100', '0.0005', '10000'),
-    # ('RNN', '1', 'CartPole-v1', '10', '100', '0.005', '10000'),
-    # ('RNN', '2', 'CartPole-v1', '10', '1000', '0.005', '10000'),
-    # ('RNN', '4', 'CartPole-v1', '1', '100', '5e-05', '10000')]
-    #('RNN', '8', 'CartPole-v1', '10', '1000', '0.005', '10000')] same as above
+    ('FFN', 1, 'envs:random_maze-v0', 1, 10, 5e-05, 10000),
+    ('RNN',  1, 'envs:random_maze-v0', 1, 100, 0.005, 10000),
+    ('RNN',  2, 'envs:random_maze-v0', 1, 100, 0.0005, 10000),
+    ('RNN',  4, 'envs:random_maze-v0', 1, 1, 5e-05, 10000),
+    ('RNN',  8, 'envs:random_maze-v0', 1, 10, 5e-05, 10000),
+    ('FFN', 1, 'CartPole-v1', 1, 100, 0.0005, 10000),
+    ('RNN',  1, 'CartPole-v1', 10, 100, 0.005, 10000),
+    ('RNN',  2, 'CartPole-v1', 10, 1000, 0.005, 10000),
+    ('RNN',  4, 'CartPole-v1', 10, 10, 0.0005, 10000),
+    ('RNN',  8, 'CartPole-v1', 10, 1000, 0.005, 10000)]
 
 
 ARG_MAP = {
@@ -198,14 +198,45 @@ def experiments(script_args):
     bash_file_commands = []
 
     for i in BEST_PARAMS:
-
-        if i[2] == 'envs:random_maze-v0':
-            algs =  ['FFN', 'RNN', 'FFN_MB', 'ZERO_RNN']
-        else:
-            algs =  ['RNN']
+        algs = ['FFN', 'RNN', 'FFN_MB', 'ZERO_RNN']
             
         for alg in algs:
-            for seq_len in [1, 2, 4, 8]:
+
+            if alg != 'FFN':
+
+                for seq_len in [1, 2, 4, 8]:
+                    for seed in SEEDS:
+                        model_args = deepcopy(ARG_MAP[alg])
+                        
+                        general_args = deepcopy(GENERAL_ARGS)
+                        general_args['seed'] = int(seed) # int needed to save to json; numpy int32 raises error
+                        general_args['save_path'] = script_args['save_path']
+                        general_args['env'] = i[2]
+                        general_args['run_dir'] = str(run_num)
+
+                        model_args['model_arch'] = alg
+                        model_args['seq_len'] = seq_len
+
+                        model_args['learning_freq'] = i[3]
+                        model_args['target_update_freq'] = i[4]
+                        model_args['learning_rate'] = i[5]
+                        model_args['buffer_size'] = i[6]
+
+                        run_args = {**general_args, **model_args, **ENV_ARGS[i[2]]}  # combine dictionaries
+
+                        if script_args['output_type'] == 'execute':                     
+                            if script_args['num_threads'] == 1:
+                                main(run_args)
+                        
+                            elif script_args['num_threads'] != 1:
+                                all_args.append(run_args)
+                        
+                        else: 
+                            bash_file_commands.append(to_command(run_args))
+
+                        run_num +=1
+
+            else:
                 for seed in SEEDS:
                     model_args = deepcopy(ARG_MAP[alg])
                     
@@ -216,7 +247,7 @@ def experiments(script_args):
                     general_args['run_dir'] = str(run_num)
 
                     model_args['model_arch'] = alg
-                    model_args['seq_len'] = seq_len
+                    model_args['seq_len'] = 1
 
                     model_args['learning_freq'] = i[3]
                     model_args['target_update_freq'] = i[4]

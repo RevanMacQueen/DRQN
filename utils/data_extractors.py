@@ -55,11 +55,12 @@ def extract_episode_lengths(root: str, param_names: list, filters=None, cutoffs=
                 episode_len = cutoff(episode_len, cutoffs[env])
 
             if last_n:
-                all_episodes.append(episode_len[-last_n:])
+
+                all_episodes.append(np.array(episode_len[-last_n:]))
             else:
-                all_episodes.append(episode_len)
+                all_episodes.append(np.array(episode_len))
     
-    return np.array(all_params), np.array( all_episodes)
+    return np.array(all_params), np.array(all_episodes)
 
 def extract_num_episodes(root: str, param_names: list, filters=None, cutoffs=None):
     """
@@ -176,3 +177,6 @@ def extract_times(root: str, param_names: list, filters=None):
             all_times.append(time)
         
     return np.array(all_params),  np.array(all_times)
+
+
+
