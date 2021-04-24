@@ -154,8 +154,6 @@ def experiments(script_args):
     if script_args['num_threads'] == 1:
         pbar = tqdm(total=len(BEST_PARAMS)*100)
 
-
-
     for i in BEST_PARAMS:
         for seed in SEEDS:
             general_args = deepcopy(GENERAL_ARGS)

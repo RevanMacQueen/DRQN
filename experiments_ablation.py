@@ -192,6 +192,13 @@ ARG_MAP = {
     'ZERO_RNN' : ZERO_RNN_ARGS
 }
 
+ALG_MAP = {
+    'FFN' :'FFN',
+    'RNN' : 'RNN',
+    'FFN_MB' : 'FFN',
+    'ZERO_RNN' :'RNN'
+}
+
 def experiments(script_args):
     run_num = 0
     all_args = []
@@ -201,9 +208,7 @@ def experiments(script_args):
         algs = ['FFN', 'RNN', 'FFN_MB', 'ZERO_RNN']
             
         for alg in algs:
-
             if alg != 'FFN':
-
                 for seq_len in [1, 2, 4, 8]:
                     for seed in SEEDS:
                         model_args = deepcopy(ARG_MAP[alg])
@@ -214,7 +219,7 @@ def experiments(script_args):
                         general_args['env'] = i[2]
                         general_args['run_dir'] = str(run_num)
 
-                        model_args['model_arch'] = alg
+                        model_args['model_arch'] = ALG_MAP[alg]
                         model_args['seq_len'] = seq_len
 
                         model_args['learning_freq'] = i[3]
@@ -246,7 +251,7 @@ def experiments(script_args):
                     general_args['env'] = i[2]
                     general_args['run_dir'] = str(run_num)
 
-                    model_args['model_arch'] = alg
+                    model_args['model_arch'] = ALG_MAP[alg]
                     model_args['seq_len'] = 1
 
                     model_args['learning_freq'] = i[3]
