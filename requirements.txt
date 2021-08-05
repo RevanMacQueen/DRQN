@@ -1,0 +1,8 @@
+git+git://github.com/erfanMhi/gym-recording-modified
+git+git://github.com/theJollySin/mazelib
+numpy
+torch
+scipy
+gym
+matplotlib
+tqdm 
