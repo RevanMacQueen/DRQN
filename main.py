@@ -193,10 +193,6 @@ def main(args):
     np.save(save_dir/'episode_lengths.npy', episode_lengths )
     np.save(save_dir/'time.npy', np.array(end_time-start_time))
 
-    # log experiments that finished 
-    # with open('experiments_done.txt', 'a') as output:
-    #     output.write(to_command(args))
-
 if __name__ == '__main__':
     args = get_args()
     main(args)
